@@ -142,12 +142,12 @@ impl Credential {
     // new implementation for x509 certificates
     pub fn verify_x509(
         &self,
-        public_key: PKeyRef<HasPublic>,
+        public_key: &PKeyRef<impl HasPublic>,
     ) -> Result<bool, ErrorStack> {
         match &self.credential {
             MlsCredentialType::Basic(_) => panic!("This method is for x509 verfiy only."),
             MlsCredentialType::X509(x509_credential) => 
-                X509::from_pem(&x509_credential.cert_data())?.verify(&public_key),
+                X509::from_pem(&x509_credential.cert_data())?.verify(public_key),
         }
     }
 
