@@ -31,6 +31,7 @@ rstest_reuse = {version = "0.4", optional = true}
 rayon = "^1.5.0"
 thiserror = "^1.0"
 backtrace = "0.3"
+openssl = { version = "0.10.42", features = ["vendored"] }
 
 [features]
 default = []

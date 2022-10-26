@@ -41,6 +41,8 @@ use tls_codec::Serialize as TlsSerializeTrait;
 use tls_codec::{TlsByteVecU16, TlsDeserialize, TlsSerialize, TlsSize};
 
 use crate::{ciphersuite::*, error::LibraryError};
+use openssl::{x509::X509, error::ErrorStack, pkey::HasPublic};
+use openssl::pkey::PKeyRef;
 
 // Private
 mod codec;
@@ -86,6 +88,14 @@ pub struct Certificate {
     cert_data: Vec<u8>,
 }
 
+impl Certificate {
+
+    // returns the cert_data
+    pub fn cert_data(&self) -> &Vec<u8> {
+       &&self.cert_data
+    }
+}
+
 /// MlsCredentialType.
 ///
 /// This enum contains variants containing the different available credentials.
@@ -125,7 +135,19 @@ impl Credential {
                 .verify_with_label(backend, signature, &SignContent::new(label, payload.into()))
                 .map_err(|_| CredentialError::InvalidSignature),
             // TODO: implement verification for X509 certificates. See issue #134.
-            MlsCredentialType::X509(_) => panic!("X509 certificates are not yet implemented."),
+            MlsCredentialType::X509(_) => panic!("Use the verfiy_x509 method for this CredentialType."),
+        }
+    }
+
+    // new implementation for x509 certificates
+    pub fn verify_x509(
+        &self,
+        public_key: &PKeyRef<impl HasPublic>,
+    ) -> Result<bool, ErrorStack> {
+        match &self.credential {
+            MlsCredentialType::Basic(_) => panic!("This method is for x509 verfiy only."),
+            MlsCredentialType::X509(x509_credential) => 
+                X509::from_pem(&x509_credential.cert_data())?.verify(public_key),
         }
     }
 
