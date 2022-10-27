@@ -20,7 +20,6 @@ fn test_remove_operation_variants(ciphersuite: Ciphersuite, backend: &impl OpenM
         // Generate credential bundles
         let alice_credential = generate_credential_bundle(
             "Alice".into(),
-            CredentialType::Basic,
             ciphersuite.signature_algorithm(),
             backend,
         )
@@ -28,7 +27,6 @@ fn test_remove_operation_variants(ciphersuite: Ciphersuite, backend: &impl OpenM
 
         let bob_credential = generate_credential_bundle(
             "Bob".into(),
-            CredentialType::Basic,
             ciphersuite.signature_algorithm(),
             backend,
         )
@@ -36,7 +34,6 @@ fn test_remove_operation_variants(ciphersuite: Ciphersuite, backend: &impl OpenM
 
         let charlie_credential = generate_credential_bundle(
             "Charlie".into(),
-            CredentialType::Basic,
             ciphersuite.signature_algorithm(),
             backend,
         )

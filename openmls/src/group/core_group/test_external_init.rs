@@ -1,5 +1,5 @@
 use crate::{
-    credentials::{CredentialBundle, CredentialType},
+    credentials::{CredentialBundle},
     framing::{FramingParameters, WireFormat},
     group::GroupId,
     key_packages::KeyPackageBundle,
@@ -27,20 +27,16 @@ fn test_external_init(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProv
     let framing_parameters = FramingParameters::new(group_aad, WireFormat::MlsPlaintext);
 
     // Define credential bundles
-    let alice_credential_bundle = CredentialBundle::new(
-        "Alice".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
-        backend,
-    )
-    .expect("An unexpected error occurred.");
-    let bob_credential_bundle = CredentialBundle::new(
-        "Bob".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
-        backend,
-    )
-    .expect("An unexpected error occurred.");
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(openmls_traits::types::SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(0, pk).unwrap();
+    let alice_credential_bundle = CredentialBundle::new(sk, cert);
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(openmls_traits::types::SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let bob_credential_bundle = CredentialBundle::new(sk, cert);
 
     // Generate KeyPackages
     let alice_key_package_bundle = KeyPackageBundle::new(
@@ -102,13 +98,11 @@ fn test_external_init(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProv
 
     // Now set up charly and try to init externally.
     // Define credential bundles
-    let charly_credential_bundle = CredentialBundle::new(
-        "Charly".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
-        backend,
-    )
-    .expect("An unexpected error occurred.");
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(openmls_traits::types::SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let charly_credential_bundle = CredentialBundle::new(sk, cert);
 
     // Have Alice export everything that Charly needs.
     let pgs_encoded: Vec<u8> = group_alice
@@ -268,13 +262,11 @@ fn test_external_init_single_member_group(
     let framing_parameters = FramingParameters::new(group_aad, WireFormat::MlsPlaintext);
 
     // Define credential bundles
-    let alice_credential_bundle = CredentialBundle::new(
-        "Alice".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
-        backend,
-    )
-    .expect("An unexpected error occurred.");
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(openmls_traits::types::SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let alice_credential_bundle = CredentialBundle::new(sk, cert);
 
     // Generate KeyPackages
     let alice_key_package_bundle = KeyPackageBundle::new(
@@ -294,13 +286,11 @@ fn test_external_init_single_member_group(
 
     // Now set up charly and try to init externally.
     // Define credential bundles
-    let charly_credential_bundle = CredentialBundle::new(
-        "Charly".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
-        backend,
-    )
-    .expect("An unexpected error occurred.");
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(openmls_traits::types::SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let charly_credential_bundle = CredentialBundle::new(sk, cert);
 
     // Have Alice export everything that Charly needs.
     let pgs_encoded: Vec<u8> = group_alice

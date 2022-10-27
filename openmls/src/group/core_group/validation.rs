@@ -130,7 +130,7 @@ impl CoreGroup {
                 .add_proposal()
                 .key_package()
                 .credential()
-                .identity()
+                .identity().to_be_bytes()
                 .to_vec();
             // ValSem100
             if !identity_set.insert(identity) {
@@ -221,14 +221,14 @@ impl CoreGroup {
         }
 
         for (_index, key_package) in self.treesync().full_leaves()? {
-            let identity = key_package.credential().identity();
+            let identity = key_package.credential().identity().to_be_bytes().to_vec();
             // ValSem103
-            if identity_set.contains(identity) {
+            if identity_set.contains(&identity) {
                 return Err(ProposalValidationError::ExistingIdentityAddProposal);
             }
             // ValSem104
-            let signature_key = key_package.credential().signature_key().as_slice();
-            if signature_key_set.contains(signature_key) {
+            let signature_key = key_package.credential().signature_key();
+            if signature_key_set.contains(signature_key.as_slice()) {
                 return Err(ProposalValidationError::ExistingSignatureKeyAddProposal);
             }
             // ValSem105

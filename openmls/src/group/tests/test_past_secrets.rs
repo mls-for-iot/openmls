@@ -3,12 +3,14 @@
 use openmls_rust_crypto::OpenMlsRustCrypto;
 use openmls_traits::{key_store::OpenMlsKeyStore, types::Ciphersuite, OpenMlsCryptoProvider};
 use tls_codec::Serialize;
+use openmls_traits::types::SignatureScheme;
+use crate::test_utils::*;
 
 use rstest::*;
 use rstest_reuse::{self, *};
 
 use crate::{
-    credentials::{CredentialBundle, CredentialType},
+    credentials::{CredentialBundle},
     framing::{MessageDecryptionError, ProcessedMessage},
     group::{errors::*, *},
     key_packages::KeyPackageBundle,
@@ -22,13 +24,11 @@ fn test_past_secrets_in_group(ciphersuite: Ciphersuite, backend: &impl OpenMlsCr
 
         // Generate credential bundles
 
-        let alice_credential_bundle = CredentialBundle::new(
-            "Alice".into(),
-            CredentialType::Basic,
-            ciphersuite.signature_algorithm(),
-            backend,
-        )
-        .expect("An unexpected error occurred.");
+        let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(0, pk).unwrap();
+    let alice_credential_bundle = CredentialBundle::new(sk, cert);
         let alice_credential = alice_credential_bundle.credential().clone();
         backend
             .key_store()
@@ -41,13 +41,11 @@ fn test_past_secrets_in_group(ciphersuite: Ciphersuite, backend: &impl OpenMlsCr
             )
             .expect("An unexpected error occurred.");
 
-        let bob_credential_bundle = CredentialBundle::new(
-            "Bob".into(),
-            CredentialType::Basic,
-            ciphersuite.signature_algorithm(),
-            backend,
-        )
-        .expect("An unexpected error occurred.");
+            let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+            .unwrap()
+            .into_tuple();
+        let cert = test_framework::test_x509::create_test_certificate(0, pk).unwrap();
+        let bob_credential_bundle = CredentialBundle::new(sk, cert);
         let bob_credential = bob_credential_bundle.credential().clone();
         backend
             .key_store()

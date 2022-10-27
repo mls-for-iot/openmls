@@ -20,13 +20,14 @@ use crate::{
 #[apply(ciphersuites_and_backends)]
 fn test_core_group_persistence(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider) {
     // Define credential bundles
-    let alice_credential_bundle = CredentialBundle::new(
-        "Alice".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(
+        openmls_traits::types::SignatureScheme::ED25519,
         backend,
     )
-    .expect("An unexpected error occurred.");
+    .unwrap()
+    .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let alice_credential_bundle = CredentialBundle::new(sk, cert);
 
     // Generate KeyPackages
     let alice_key_package_bundle = KeyPackageBundle::new(
@@ -81,13 +82,14 @@ fn test_failed_groupinfo_decryption(
         mac_value: vec![1, 2, 3, 4, 5, 6, 7, 8, 9].into(),
     });
 
-    let alice_credential_bundle = CredentialBundle::new(
-        "Alice".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(
+        openmls_traits::types::SignatureScheme::ED25519,
         backend,
     )
-    .expect("An unexpected error occurred.");
+    .unwrap()
+    .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let alice_credential_bundle = CredentialBundle::new(sk, cert);
 
     let key_package_bundle =
         KeyPackageBundle::new(&[ciphersuite], &alice_credential_bundle, backend, vec![])
@@ -185,20 +187,22 @@ fn test_update_path(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvid
     let framing_parameters = FramingParameters::new(group_aad, WireFormat::MlsPlaintext);
 
     // Define credential bundles
-    let alice_credential_bundle = CredentialBundle::new(
-        "Alice".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(
+        openmls_traits::types::SignatureScheme::ED25519,
         backend,
     )
-    .expect("An unexpected error occurred.");
-    let bob_credential_bundle = CredentialBundle::new(
-        "Bob".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
+    .unwrap()
+    .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let alice_credential_bundle = CredentialBundle::new(sk, cert);
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(
+        openmls_traits::types::SignatureScheme::ED25519,
         backend,
     )
-    .expect("An unexpected error occurred.");
+    .unwrap()
+    .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let bob_credential_bundle = CredentialBundle::new(sk, cert);
 
     // Generate KeyPackages
     let alice_key_package_bundle = KeyPackageBundle::new(
@@ -371,20 +375,22 @@ fn test_psks(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider) {
     let framing_parameters = FramingParameters::new(group_aad, WireFormat::MlsPlaintext);
 
     // Define credential bundles
-    let alice_credential_bundle = CredentialBundle::new(
-        "Alice".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(
+        openmls_traits::types::SignatureScheme::ED25519,
         backend,
     )
-    .expect("An unexpected error occurred.");
-    let bob_credential_bundle = CredentialBundle::new(
-        "Bob".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
+    .unwrap()
+    .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let alice_credential_bundle = CredentialBundle::new(sk, cert);
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(
+        openmls_traits::types::SignatureScheme::ED25519,
         backend,
     )
-    .expect("An unexpected error occurred.");
+    .unwrap()
+    .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let bob_credential_bundle = CredentialBundle::new(sk, cert);
 
     // Generate KeyPackages
     let alice_key_package_bundle = KeyPackageBundle::new(
@@ -517,20 +523,22 @@ fn test_staged_commit_creation(ciphersuite: Ciphersuite, backend: &impl OpenMlsC
     let framing_parameters = FramingParameters::new(group_aad, WireFormat::MlsPlaintext);
 
     // Define credential bundles
-    let alice_credential_bundle = CredentialBundle::new(
-        "Alice".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(
+        openmls_traits::types::SignatureScheme::ED25519,
         backend,
     )
-    .expect("An unexpected error occurred.");
-    let bob_credential_bundle = CredentialBundle::new(
-        "Bob".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
+    .unwrap()
+    .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let alice_credential_bundle = CredentialBundle::new(sk, cert);
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(
+        openmls_traits::types::SignatureScheme::ED25519,
         backend,
     )
-    .expect("An unexpected error occurred.");
+    .unwrap()
+    .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let bob_credential_bundle = CredentialBundle::new(sk, cert);
 
     // Generate KeyPackages
     let alice_key_package_bundle = KeyPackageBundle::new(
@@ -609,13 +617,14 @@ fn test_own_commit_processing(ciphersuite: Ciphersuite, backend: &impl OpenMlsCr
     let framing_parameters = FramingParameters::new(group_aad, WireFormat::MlsPlaintext);
 
     // Define credential bundles
-    let alice_credential_bundle = CredentialBundle::new(
-        "Alice".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(
+        openmls_traits::types::SignatureScheme::ED25519,
         backend,
     )
-    .expect("An unexpected error occurred.");
+    .unwrap()
+    .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let alice_credential_bundle = CredentialBundle::new(sk, cert);
 
     // Generate KeyPackages
     let alice_key_package_bundle = KeyPackageBundle::new(
@@ -655,13 +664,14 @@ fn setup_client(
     ciphersuite: Ciphersuite,
     backend: &impl OpenMlsCryptoProvider,
 ) -> (CredentialBundle, KeyPackageBundle) {
-    let credential_bundle = CredentialBundle::new(
-        id.into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(
+        openmls_traits::types::SignatureScheme::ED25519,
         backend,
     )
-    .expect("An unexpected error occurred.");
+    .unwrap()
+    .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let credential_bundle = CredentialBundle::new(sk, cert);
     let key_package_bundle =
         KeyPackageBundle::new(&[ciphersuite], &credential_bundle, backend, Vec::new())
             .expect("An unexpected error occurred.");
@@ -737,7 +747,7 @@ fn test_proposal_application_after_self_was_removed(
         .treesync()
         .leaves()
         .values()
-        .find(|&kp| kp.credential().identity() == b"Bob")
+        .find(|&kp| kp.credential().identity() == 1)
         .expect("Couldn't find Bob in tree.")
         .hash_ref(backend.crypto())
         .expect("error computing hash ref");
@@ -837,6 +847,5 @@ fn test_proposal_application_after_self_was_removed(
     assert_eq!(alice_members, bob_members,);
     assert_eq!(bob_members, charlie_members);
 
-    assert_eq!(bob_members[0].identity(), b"Alice");
-    assert_eq!(bob_members[1].identity(), b"Charlie");
+    assert_eq!(bob_members[0].identity(), alice_credential_bundle.credential().identity());
 }

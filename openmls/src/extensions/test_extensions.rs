@@ -95,20 +95,16 @@ fn ratchet_tree_extension(ciphersuite: Ciphersuite, backend: &impl OpenMlsCrypto
     let framing_parameters = FramingParameters::new(group_aad, WireFormat::MlsPlaintext);
 
     // Define credential bundles
-    let alice_credential_bundle = CredentialBundle::new(
-        "Alice".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
-        backend,
-    )
-    .expect("An unexpected error occurred.");
-    let bob_credential_bundle = CredentialBundle::new(
-        "Bob".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
-        backend,
-    )
-    .expect("An unexpected error occurred.");
+    let (sk, pk) = crate::prelude_test::SignatureKeypair::new(openmls_traits::types::SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(0, pk).unwrap();
+    let alice_credential_bundle = CredentialBundle::new(sk, cert);
+    let (sk, pk) = crate::prelude_test::SignatureKeypair::new(openmls_traits::types::SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let bob_credential_bundle = CredentialBundle::new(sk, cert);
 
     // Generate KeyPackages
     let alice_key_package_bundle = KeyPackageBundle::new(

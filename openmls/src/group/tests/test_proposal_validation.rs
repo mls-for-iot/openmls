@@ -1,7 +1,9 @@
 //! This module tests the validation of proposals as defined in
 //! https://openmls.tech/book/message_validation.html#semantic-validation-of-proposals-covered-by-a-commit
 
+use crate::test_utils::*;
 use openmls_rust_crypto::OpenMlsRustCrypto;
+use openmls_traits::types::SignatureScheme;
 use openmls_traits::{key_store::OpenMlsKeyStore, types::Ciphersuite, OpenMlsCryptoProvider};
 
 use rstest::*;
@@ -21,6 +23,7 @@ use crate::{
         proposals::{AddProposal, Proposal, ProposalOrRef, RemoveProposal, UpdateProposal},
         Welcome,
     },
+    test_utils::test_framework::test_x509::*,
     treesync::errors::ApplyUpdatePathError,
     versions::ProtocolVersion,
 };
@@ -33,13 +36,9 @@ fn generate_credential_bundle_and_key_package_bundle(
     ciphersuite: Ciphersuite,
     backend: &impl OpenMlsCryptoProvider,
 ) -> (CredentialBundle, KeyPackageBundle) {
-    let credential = generate_credential_bundle(
-        identity,
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
-        backend,
-    )
-    .expect("Failed to generate CredentialBundle.");
+    let credential =
+        generate_credential_bundle(identity, ciphersuite.signature_algorithm(), backend)
+            .expect("Failed to generate CredentialBundle.");
     let credential_bundle = backend
         .key_store()
         .read::<CredentialBundle>(
@@ -100,21 +99,13 @@ fn validation_test_setup(
     let group_id = GroupId::from_slice(b"Test Group");
 
     // Generate credential bundles
-    let alice_credential = generate_credential_bundle(
-        "Alice".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
-        backend,
-    )
-    .expect("An unexpected error occurred.");
+    let alice_credential =
+        generate_credential_bundle("Alice".into(), ciphersuite.signature_algorithm(), backend)
+            .expect("An unexpected error occurred.");
 
-    let bob_credential = generate_credential_bundle(
-        "Bob".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
-        backend,
-    )
-    .expect("An unexpected error occurred.");
+    let bob_credential =
+        generate_credential_bundle("Bob".into(), ciphersuite.signature_algorithm(), backend)
+            .expect("An unexpected error occurred.");
 
     // Generate KeyPackages
     let alice_key_package =
@@ -357,6 +348,7 @@ fn test_valsem100(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider
 /// ValSem101:
 /// Add Proposal:
 /// Signature public key in proposals must be unique among proposals
+
 #[apply(ciphersuites_and_backends)]
 fn test_valsem101(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider) {
     for bob_and_charlie_share_keys in [
@@ -390,10 +382,16 @@ fn test_valsem101(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider
             }
         }
 
-        let bob_credential_bundle =
-            CredentialBundle::from_parts("Bob".into(), bob_signature_keypair);
-        let charlie_credential_bundle =
-            CredentialBundle::from_parts("Charlie".into(), charlie_signature_keypair);
+        let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+            .unwrap()
+            .into_tuple();
+        let cert = create_test_certificate(0, pk).unwrap();
+        let bob_credential_bundle = CredentialBundle::new(sk, cert);
+        let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+            .unwrap()
+            .into_tuple();
+        let cert = create_test_certificate(0, pk).unwrap();
+        let charlie_credential_bundle = CredentialBundle::new(sk, cert);
 
         let bob_key_package_bundle =
             KeyPackageBundle::new(&[ciphersuite], &bob_credential_bundle, backend, vec![])
@@ -457,8 +455,11 @@ fn test_valsem101(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider
 
     // Now let's create a second proposal and insert it into the commit. We want
     // a different hpke key, different identity, but the same signature key.
-    let dave_credential_bundle =
-        CredentialBundle::from_parts("Dave".into(), charlie_credential_bundle.key_pair());
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = create_test_certificate(0, pk).unwrap();
+    let dave_credential_bundle = CredentialBundle::new(sk, cert);
 
     let mut kpb_payload = KeyPackageBundlePayload::from(charlie_key_package_bundle);
     kpb_payload.set_credential(dave_credential_bundle.credential().clone());
@@ -810,8 +811,11 @@ fn test_valsem104(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider
             ),
         };
 
-        let alice_credential_bundle =
-            CredentialBundle::from_parts("Alice".into(), alice_signature_keypair);
+        let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+            .unwrap()
+            .into_tuple();
+        let cert = create_test_certificate(0, pk).unwrap();
+        let alice_credential_bundle = CredentialBundle::new(sk, cert);
         let alice_credential = alice_credential_bundle.credential().clone();
         backend
             .key_store()
@@ -824,8 +828,11 @@ fn test_valsem104(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider
             )
             .expect("An unexpected error occurred.");
 
-        let bob_credential_bundle =
-            CredentialBundle::from_parts("Bob".into(), bob_signature_keypair);
+        let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+            .unwrap()
+            .into_tuple();
+        let cert = create_test_certificate(0, pk).unwrap();
+        let charlie_credential_bundle = CredentialBundle::new(sk, cert);
 
         let alice_key_package_bundle =
             KeyPackageBundle::new(&[ciphersuite], &alice_credential_bundle, backend, vec![])
@@ -843,7 +850,7 @@ fn test_valsem104(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider
             .expect("An unexpected error occurred.");
 
         let bob_key_package_bundle =
-            KeyPackageBundle::new(&[ciphersuite], &bob_credential_bundle, backend, vec![])
+            KeyPackageBundle::new(&[ciphersuite], &charlie_credential_bundle, backend, vec![])
                 .expect("failed to generate key package");
         let bob_key_package = bob_key_package_bundle.key_package().clone();
 
@@ -903,8 +910,11 @@ fn test_valsem104(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider
         .expect("An unexpected error occurred.");
 
     // Create the credential bundle using a copy of Bob's key pair.
-    let dave_credential_bundle =
-        CredentialBundle::from_parts("Dave".into(), bob_credential_bundle.key_pair());
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = create_test_certificate(0, pk).unwrap();
+    let dave_credential_bundle = CredentialBundle::new(sk, cert);
 
     let kpb = KeyPackageBundle::new(&[ciphersuite], &dave_credential_bundle, backend, vec![])
         .expect("error creating kpb");
@@ -1606,13 +1616,11 @@ fn test_valsem109(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider
     // proposal by bob that changes his identity.
 
     // We begin by creating a KPB with a different identity.
-    let new_cb = CredentialBundle::new(
-        "Bobby".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
-        backend,
-    )
-    .expect("error creating credential bundle");
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = create_test_certificate(0, pk).unwrap();
+    let new_cb = CredentialBundle::new(sk, cert);
     let bob_kp = bob_group
         .group()
         .treesync()

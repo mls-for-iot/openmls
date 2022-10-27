@@ -44,7 +44,6 @@ fn validation_test_setup(
     // Generate credential bundles
     let alice_credential = generate_credential_bundle(
         "Alice".into(),
-        CredentialType::Basic,
         ciphersuite.signature_algorithm(),
         backend,
     )
@@ -52,7 +51,6 @@ fn validation_test_setup(
 
     let bob_credential = generate_credential_bundle(
         "Bob".into(),
-        CredentialType::Basic,
         ciphersuite.signature_algorithm(),
         backend,
     )
@@ -822,7 +820,6 @@ fn test_valsem247(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider
     // and then re-signing the message with his original credential.
     let bob_new_credential = generate_credential_bundle(
         "Bob".into(),
-        CredentialType::Basic,
         ciphersuite.signature_algorithm(),
         backend,
     )

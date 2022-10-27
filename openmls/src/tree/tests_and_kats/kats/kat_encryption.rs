@@ -81,7 +81,7 @@ use crate::{
     ciphersuite::Secret, messages::proposals::RemoveProposal, tree::index::SecretTreeLeafIndex,
 };
 use crate::{
-    credentials::{CredentialBundle, CredentialType},
+    credentials::CredentialBundle,
     framing::*,
     group::*,
     key_packages::KeyPackageBundle,
@@ -136,19 +136,19 @@ pub struct EncryptionTestVector {
     sender_data_info: SenderDataInfo,
     leaves: Vec<LeafSequence>,
 }
-
+use crate::prelude_test::SignatureKeypair;
 #[cfg(any(feature = "test-utils", test))]
 fn group(
     ciphersuite: Ciphersuite,
     backend: &impl OpenMlsCryptoProvider,
 ) -> (CoreGroup, CredentialBundle) {
-    let credential_bundle = CredentialBundle::new(
-        "Kreator".into(),
-        CredentialType::Basic,
-        SignatureScheme::from(ciphersuite),
-        backend,
-    )
-    .expect("An unexpected error occurred.");
+    use crate::test_utils::test_framework::test_x509::create_test_certificate;
+
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = create_test_certificate(0, pk).unwrap();
+    let credential_bundle = CredentialBundle::new(sk, cert);
     let key_package_bundle =
         KeyPackageBundle::new(&[ciphersuite], &credential_bundle, backend, Vec::new())
             .expect("An unexpected error occurred.");
@@ -166,13 +166,13 @@ fn receiver_group(
     backend: &impl OpenMlsCryptoProvider,
     group_id: &GroupId,
 ) -> CoreGroup {
-    let credential_bundle = CredentialBundle::new(
-        "Receiver".into(),
-        CredentialType::Basic,
-        SignatureScheme::from(ciphersuite),
-        backend,
-    )
-    .expect("An unexpected error occurred.");
+    use crate::test_utils::test_framework::test_x509::create_test_certificate;
+
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = create_test_certificate(0, pk).unwrap();
+    let credential_bundle = CredentialBundle::new(sk, cert);
     let key_package_bundle =
         KeyPackageBundle::new(&[ciphersuite], &credential_bundle, backend, Vec::new())
             .expect("An unexpected error occurred.");

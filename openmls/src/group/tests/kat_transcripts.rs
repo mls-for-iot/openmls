@@ -9,8 +9,15 @@ use std::convert::TryFrom;
 use crate::test_utils::{read, write};
 
 use crate::{
-    ciphersuite::hash_ref::KeyPackageRef, ciphersuite::signable::*, credentials::*, framing::*,
-    group::*, messages::*, schedule::*, test_utils::*, versions::ProtocolVersion,
+    ciphersuite::hash_ref::KeyPackageRef,
+    ciphersuite::signable::*,
+    credentials::*,
+    framing::*,
+    group::*,
+    messages::*,
+    schedule::*,
+    test_utils::{test_framework::test_x509::create_test_certificate, *},
+    versions::ProtocolVersion,
 };
 
 use openmls_rust_crypto::OpenMlsRustCrypto;
@@ -63,13 +70,11 @@ pub fn generate_test_vector(ciphersuite: Ciphersuite) -> TranscriptTestVector {
     );
 
     // Build plaintext commit message.
-    let credential_bundle = CredentialBundle::new(
-        b"client".to_vec(),
-        CredentialType::Basic,
-        SignatureScheme::from(ciphersuite),
-        &crypto,
-    )
-    .expect("An unexpected error occurred.");
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, &crypto)
+        .unwrap()
+        .into_tuple();
+    let cert = create_test_certificate(0, pk).unwrap();
+    let credential_bundle = CredentialBundle::new(sk, cert);
     let context = GroupContext::new(
         group_id.clone(),
         epoch,

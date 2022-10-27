@@ -4,7 +4,7 @@ extern crate openmls;
 extern crate rand;
 
 use criterion::Criterion;
-use openmls::prelude::*;
+use openmls::{prelude::*, test_utils::test_framework::test_x509::create_test_certificate};
 use openmls_rust_crypto::OpenMlsRustCrypto;
 use openmls_traits::{crypto::OpenMlsCrypto, OpenMlsCryptoProvider};
 
@@ -18,13 +18,11 @@ fn criterion_kp_bundle(c: &mut Criterion, backend: &impl OpenMlsCryptoProvider) 
             move |b| {
                 b.iter_with_setup(
                     || {
-                        CredentialBundle::new(
-                            vec![1, 2, 3],
-                            CredentialType::Basic,
-                            ciphersuite.signature_algorithm(),
-                            backend,
-                        )
-                        .expect("An unexpected error occurred.")
+                        let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+                            .unwrap()
+                            .into_tuple();
+                        let cert = create_test_certificate(0, pk).unwrap();
+                        CredentialBundle::new(sk, cert)
                     },
                     |credential_bundle: CredentialBundle| {
                         KeyPackageBundle::new(

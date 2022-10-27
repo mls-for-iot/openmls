@@ -3,10 +3,10 @@
 use crate::{
     ciphersuite::hash_ref::KeyPackageRef,
     ciphersuite::{signable::Signable, AeadKey, AeadNonce, Mac, Secret},
-    credentials::{CredentialBundle, CredentialType},
+    credentials::CredentialBundle,
     group::GroupId,
     messages::{ConfirmationTag, EncryptedGroupSecrets, GroupInfoTBS, Welcome},
-    versions::ProtocolVersion,
+    versions::ProtocolVersion, test_utils::test_framework::test_x509::create_test_certificate, prelude_test::SignatureKeypair,
 };
 
 use rstest::*;
@@ -15,7 +15,7 @@ use rstest_reuse::{self, *};
 use crate::group::GroupContext;
 use openmls_rust_crypto::OpenMlsRustCrypto;
 use openmls_traits::{
-    crypto::OpenMlsCrypto, random::OpenMlsRand, types::Ciphersuite, OpenMlsCryptoProvider,
+    crypto::OpenMlsCrypto, random::OpenMlsRand, types::{Ciphersuite, SignatureScheme}, OpenMlsCryptoProvider,
 };
 use tls_codec::{Deserialize, Serialize};
 
@@ -55,13 +55,11 @@ fn test_welcome_message_with_version(
     };
 
     // We need a credential bundle to sign the group info.
-    let credential_bundle = CredentialBundle::new(
-        "XXX".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
-        backend,
-    )
-    .expect("An unexpected error occurred.");
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = create_test_certificate(0, pk).unwrap();
+    let credential_bundle = CredentialBundle::new(sk, cert);
     let group_info = group_info_tbs
         .sign(backend, &credential_bundle)
         .expect("Error signing GroupInfo");

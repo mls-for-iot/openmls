@@ -94,13 +94,11 @@ pub(crate) fn setup(config: TestSetupConfig, backend: &impl OpenMlsCryptoProvide
         // signature scheme), as well as 10 KeyPackages per ciphersuite.
         for ciphersuite in client.ciphersuites {
             // Create a credential_bundle for the given ciphersuite.
-            let credential_bundle = CredentialBundle::new(
-                client.name.as_bytes().to_vec(),
-                CredentialType::Basic,
-                SignatureScheme::from(ciphersuite),
-                backend,
-            )
-            .expect("An unexpected error occurred.");
+            let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+                .unwrap()
+                .into_tuple();
+            let cert = test_framework::test_x509::create_test_certificate(0, pk).unwrap();
+            let credential_bundle = CredentialBundle::new(sk, cert);
             // Create a number of key packages.
             let mut key_packages = Vec::new();
             for _ in 0..KEY_PACKAGE_COUNT {
@@ -340,11 +338,14 @@ fn test_setup(backend: &impl OpenMlsCryptoProvider) {
 // Helper function to generate a CredentialBundle
 pub(super) fn generate_credential_bundle(
     identity: Vec<u8>,
-    credential_type: CredentialType,
     signature_scheme: SignatureScheme,
     backend: &impl OpenMlsCryptoProvider,
 ) -> Result<Credential, CredentialError> {
-    let cb = CredentialBundle::new(identity, credential_type, signature_scheme, backend)?;
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(0, pk).unwrap();
+    let cb = CredentialBundle::new(sk, cert);
     let credential = cb.credential().clone();
     backend
         .key_store()

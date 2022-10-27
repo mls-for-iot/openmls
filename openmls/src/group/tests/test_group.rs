@@ -8,6 +8,9 @@ use crate::{
     tree::sender_ratchet::SenderRatchetConfiguration,
     *,
 };
+use openmls_traits::types::SignatureScheme;
+use crate::test_utils::*;
+
 use openmls_rust_crypto::OpenMlsRustCrypto;
 use tls_codec::Serialize;
 
@@ -18,20 +21,16 @@ fn create_commit_optional_path(ciphersuite: Ciphersuite, backend: &impl OpenMlsC
     let framing_parameters = FramingParameters::new(group_aad, WireFormat::MlsPlaintext);
 
     // Define identities
-    let alice_credential_bundle = CredentialBundle::new(
-        "Alice".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
-        backend,
-    )
-    .expect("An unexpected error occurred.");
-    let bob_credential_bundle = CredentialBundle::new(
-        "Bob".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
-        backend,
-    )
-    .expect("An unexpected error occurred.");
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(0, pk).unwrap();
+    let alice_credential_bundle = CredentialBundle::new(sk, cert);
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(0, pk).unwrap();
+    let bob_credential_bundle = CredentialBundle::new(sk, cert);
 
     // Mandatory extensions, will be fixed in #164
     let lifetime_extension = Extension::LifeTime(LifetimeExtension::new(60));
@@ -208,20 +207,16 @@ fn basic_group_setup(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvi
     let framing_parameters = FramingParameters::new(group_aad, WireFormat::MlsPlaintext);
 
     // Define credential bundles
-    let alice_credential_bundle = CredentialBundle::new(
-        "Alice".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
-        backend,
-    )
-    .expect("An unexpected error occurred.");
-    let bob_credential_bundle = CredentialBundle::new(
-        "Bob".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
-        backend,
-    )
-    .expect("An unexpected error occurred.");
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(0, pk).unwrap();
+    let alice_credential_bundle = CredentialBundle::new(sk, cert);
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(0, pk).unwrap();
+    let bob_credential_bundle = CredentialBundle::new(sk, cert);
 
     // Generate KeyPackages
     let bob_key_package_bundle =
@@ -288,20 +283,16 @@ fn group_operations(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvid
     let sender_ratchet_configuration = SenderRatchetConfiguration::default();
 
     // Define credential bundles
-    let alice_credential_bundle = CredentialBundle::new(
-        "Alice".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
-        backend,
-    )
-    .expect("An unexpected error occurred.");
-    let bob_credential_bundle = CredentialBundle::new(
-        "Bob".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
-        backend,
-    )
-    .expect("An unexpected error occurred.");
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(0, pk).unwrap();
+    let alice_credential_bundle = CredentialBundle::new(sk, cert);
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(0, pk).unwrap();
+    let bob_credential_bundle = CredentialBundle::new(sk, cert);
 
     // Mandatory extensions
     let capabilities_extension = Extension::Capabilities(CapabilitiesExtension::new(
@@ -612,13 +603,11 @@ fn group_operations(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvid
     }
 
     // === Bob adds Charlie ===
-    let charlie_credential_bundle = CredentialBundle::new(
-        "Charlie".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
-        backend,
-    )
-    .expect("An unexpected error occurred.");
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(0, pk).unwrap();
+    let charlie_credential_bundle = CredentialBundle::new(sk, cert);
 
     let charlie_key_package_bundle = KeyPackageBundle::new(
         &[ciphersuite],

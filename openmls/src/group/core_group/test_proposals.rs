@@ -1,13 +1,13 @@
-use crate::test_utils::*;
+use crate::{test_utils::{*, test_framework::test_x509::create_test_certificate}, prelude_test::signature::SignatureKeypair};
 use openmls_rust_crypto::OpenMlsRustCrypto;
-use openmls_traits::{types::Ciphersuite, OpenMlsCryptoProvider};
+use openmls_traits::{types::{Ciphersuite, SignatureScheme}, OpenMlsCryptoProvider};
 
 use crate::{
     ciphersuite::{
         hash_ref::{KeyPackageRef, ProposalRef},
         Secret,
     },
-    credentials::{CredentialBundle, CredentialType},
+    credentials::CredentialBundle,
     extensions::{Extension, ExtensionType, ExternalKeyIdExtension, RequiredCapabilitiesExtension},
     framing::sender::Sender,
     framing::{FramingParameters, MlsPlaintext, WireFormat},
@@ -30,13 +30,11 @@ fn setup_client(
     ciphersuite: Ciphersuite,
     backend: &impl OpenMlsCryptoProvider,
 ) -> (CredentialBundle, KeyPackageBundle) {
-    let credential_bundle = CredentialBundle::new(
-        id.into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
-        backend,
-    )
-    .expect("An unexpected error occurred.");
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = create_test_certificate(0, pk).unwrap();
+    let credential_bundle = CredentialBundle::new(sk, cert);
     let key_package_bundle =
         KeyPackageBundle::new(&[ciphersuite], &credential_bundle, backend, Vec::new())
             .expect("An unexpected error occurred.");

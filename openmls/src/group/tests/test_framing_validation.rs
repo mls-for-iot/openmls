@@ -38,7 +38,6 @@ fn validation_test_setup(
     // Generate credential bundles
     let alice_credential = generate_credential_bundle(
         "Alice".into(),
-        CredentialType::Basic,
         ciphersuite.signature_algorithm(),
         backend,
     )
@@ -46,7 +45,6 @@ fn validation_test_setup(
 
     let bob_credential = generate_credential_bundle(
         "Bob".into(),
-        CredentialType::Basic,
         ciphersuite.signature_algorithm(),
         backend,
     )

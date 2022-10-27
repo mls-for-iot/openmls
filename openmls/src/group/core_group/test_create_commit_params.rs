@@ -1,7 +1,7 @@
 use core_group::{create_commit_params::CreateCommitParams, proposals::ProposalStore};
 use openmls_traits::types::SignatureScheme;
 
-use crate::{credentials::CredentialType, test_utils::*};
+use crate::{ test_utils::*};
 
 use super::*;
 
@@ -10,27 +10,25 @@ use super::*;
 fn build_create_commit_params(backend: &impl OpenMlsCryptoProvider) {
     let framing_parameters: FramingParameters =
         FramingParameters::new(&[1, 2, 3], WireFormat::MlsCiphertext);
-    let credential_bundle: &CredentialBundle = &CredentialBundle::new(
-        vec![4, 5, 6],
-        CredentialType::Basic,
-        SignatureScheme::ED25519,
-        backend,
-    )
-    .expect("Could not create new CredentialBundle.");
+        let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(openmls_traits::types::SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let credential_bundle = CredentialBundle::new(sk, cert);
     let proposal_store: &ProposalStore = &ProposalStore::new();
     let inline_proposals: Vec<Proposal> = vec![];
     let force_self_update: bool = true;
 
     let params = CreateCommitParams::builder()
         .framing_parameters(framing_parameters)
-        .credential_bundle(credential_bundle)
+        .credential_bundle(&credential_bundle)
         .proposal_store(proposal_store)
         .inline_proposals(inline_proposals.clone())
         .force_self_update(force_self_update)
         .build();
 
     assert_eq!(params.framing_parameters(), &framing_parameters);
-    assert_eq!(params.credential_bundle(), credential_bundle);
+    assert_eq!(params.credential_bundle(), &credential_bundle);
     assert_eq!(params.proposal_store(), proposal_store);
     assert_eq!(params.inline_proposals(), inline_proposals);
     assert_eq!(params.force_self_update(), force_self_update);

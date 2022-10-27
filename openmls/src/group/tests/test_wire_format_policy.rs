@@ -25,7 +25,6 @@ fn create_group(
     // Generate credential bundles
     let credential = generate_credential_bundle(
         "Alice".into(),
-        CredentialType::Basic,
         ciphersuite.signature_algorithm(),
         backend,
     )
@@ -62,7 +61,6 @@ fn receive_message(
     // Generate credential bundles
     let bob_credential = generate_credential_bundle(
         "Bob".into(),
-        CredentialType::Basic,
         ciphersuite.signature_algorithm(),
         backend,
     )

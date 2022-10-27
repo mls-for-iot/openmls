@@ -3,9 +3,6 @@ use openmls_traits::{random::OpenMlsRand, types::Ciphersuite, OpenMlsCryptoProvi
 use rstest::*;
 use rstest_reuse::{self, *};
 
-use openmls_rust_crypto::OpenMlsRustCrypto;
-use tls_codec::{Deserialize, Serialize};
-
 use crate::{
     ciphersuite::{
         hash_ref::KeyPackageRef,
@@ -21,23 +18,25 @@ use crate::{
         tests::tree_printing::print_tree,
     },
     key_packages::KeyPackageBundle,
+    test_utils::*,
     tree::{
         index::SecretTreeLeafIndex, secret_tree::SecretTree,
         sender_ratchet::SenderRatchetConfiguration,
     },
     versions::ProtocolVersion,
 };
+use openmls_rust_crypto::OpenMlsRustCrypto;
+use openmls_traits::types::SignatureScheme;
+use tls_codec::{Deserialize, Serialize};
 
 /// This tests serializing/deserializing MlsPlaintext
 #[apply(ciphersuites_and_backends)]
 fn codec_plaintext(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider) {
-    let credential_bundle = CredentialBundle::new(
-        vec![7, 8, 9],
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
-        backend,
-    )
-    .expect("An unexpected error occurred.");
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(0, pk).unwrap();
+    let credential_bundle = CredentialBundle::new(sk, cert);
     let sender = Sender::build_member(&KeyPackageRef::from_slice(
         &backend
             .rand()
@@ -78,13 +77,14 @@ fn codec_plaintext(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvide
 /// This tests serializing/deserializing MlsCiphertext
 #[apply(ciphersuites_and_backends)]
 fn codec_ciphertext(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider) {
-    let credential_bundle = CredentialBundle::new(
-        vec![7, 8, 9],
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(
+        openmls_traits::types::SignatureScheme::ED25519,
         backend,
     )
-    .expect("An unexpected error occurred.");
+    .unwrap()
+    .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let credential_bundle = CredentialBundle::new(sk, cert);
     let sender = Sender::build_member(&KeyPackageRef::from_slice(
         &backend
             .rand()
@@ -155,13 +155,14 @@ fn codec_ciphertext(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvid
 #[apply(ciphersuites_and_backends)]
 fn wire_format_checks(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider) {
     let configuration = &SenderRatchetConfiguration::default();
-    let credential_bundle = CredentialBundle::new(
-        vec![7, 8, 9],
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(
+        openmls_traits::types::SignatureScheme::ED25519,
         backend,
     )
-    .expect("An unexpected error occurred.");
+    .unwrap()
+    .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let credential_bundle = CredentialBundle::new(sk, cert);
     let sender = Sender::build_member(&KeyPackageRef::from_slice(
         &backend
             .rand()
@@ -298,13 +299,14 @@ fn wire_format_checks(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProv
 
 #[apply(ciphersuites_and_backends)]
 fn membership_tag(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider) {
-    let credential_bundle = CredentialBundle::new(
-        vec![7, 8, 9],
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(
+        openmls_traits::types::SignatureScheme::ED25519,
         backend,
     )
-    .expect("An unexpected error occurred.");
+    .unwrap()
+    .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let credential_bundle = CredentialBundle::new(sk, cert);
     let group_context = GroupContext::new(GroupId::random(backend), 1, vec![], vec![], &[]);
     let membership_key = MembershipKey::from_secret(
         Secret::random(ciphersuite, backend, None /* MLS version */)
@@ -360,27 +362,30 @@ fn unknown_sender(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider
     let configuration = &SenderRatchetConfiguration::default();
 
     // Define credential bundles
-    let alice_credential_bundle = CredentialBundle::new(
-        "Alice".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(
+        openmls_traits::types::SignatureScheme::ED25519,
         backend,
     )
-    .expect("An unexpected error occurred.");
-    let bob_credential_bundle = CredentialBundle::new(
-        "Bob".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
+    .unwrap()
+    .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let alice_credential_bundle = CredentialBundle::new(sk, cert);
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(
+        openmls_traits::types::SignatureScheme::ED25519,
         backend,
     )
-    .expect("An unexpected error occurred.");
-    let charlie_credential_bundle = CredentialBundle::new(
-        "Charlie".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
+    .unwrap()
+    .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let bob_credential_bundle = CredentialBundle::new(sk, cert);
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(
+        openmls_traits::types::SignatureScheme::ED25519,
         backend,
     )
-    .expect("An unexpected error occurred.");
+    .unwrap()
+    .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let charlie_credential_bundle = CredentialBundle::new(sk, cert);
 
     // Generate KeyPackages
     let bob_key_package_bundle =
@@ -570,20 +575,22 @@ fn confirmation_tag_presence(ciphersuite: Ciphersuite, backend: &impl OpenMlsCry
     let framing_parameters = FramingParameters::new(group_aad, WireFormat::MlsPlaintext);
 
     // Define credential bundles
-    let alice_credential_bundle = CredentialBundle::new(
-        "Alice".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(
+        openmls_traits::types::SignatureScheme::ED25519,
         backend,
     )
-    .expect("An unexpected error occurred.");
-    let bob_credential_bundle = CredentialBundle::new(
-        "Bob".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
+    .unwrap()
+    .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let alice_credential_bundle = CredentialBundle::new(sk, cert);
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(
+        openmls_traits::types::SignatureScheme::ED25519,
         backend,
     )
-    .expect("An unexpected error occurred.");
+    .unwrap()
+    .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let bob_credential_bundle = CredentialBundle::new(sk, cert);
 
     // Generate KeyPackages
     let bob_key_package_bundle =
@@ -674,20 +681,22 @@ fn invalid_plaintext_signature(ciphersuite: Ciphersuite, backend: &impl OpenMlsC
     let framing_parameters = FramingParameters::new(group_aad, WireFormat::MlsPlaintext);
 
     // Define credential bundles
-    let alice_credential_bundle = CredentialBundle::new(
-        "Alice".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(
+        openmls_traits::types::SignatureScheme::ED25519,
         backend,
     )
-    .expect("An unexpected error occurred.");
-    let bob_credential_bundle = CredentialBundle::new(
-        "Bob".into(),
-        CredentialType::Basic,
-        ciphersuite.signature_algorithm(),
+    .unwrap()
+    .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let alice_credential_bundle = CredentialBundle::new(sk, cert);
+    let (sk, pk) = crate::prelude_test::signature::SignatureKeypair::new(
+        openmls_traits::types::SignatureScheme::ED25519,
         backend,
     )
-    .expect("An unexpected error occurred.");
+    .unwrap()
+    .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(1, pk).unwrap();
+    let bob_credential_bundle = CredentialBundle::new(sk, cert);
 
     // Generate KeyPackages
     let bob_key_package_bundle =

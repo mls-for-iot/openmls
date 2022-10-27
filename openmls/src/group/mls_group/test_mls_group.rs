@@ -10,7 +10,7 @@ use crate::{
     key_packages::{errors::*, *},
     messages::proposals::*,
     test_utils::test_framework::{
-        errors::ClientError, ActionType::Commit, CodecUse, MlsGroupTestSetup,
+        errors::ClientError, ActionType::Commit, CodecUse, MlsGroupTestSetup, test_x509::create_test_certificate,
     },
     test_utils::*,
 };
@@ -18,11 +18,14 @@ use crate::{
 fn generate_credential_bundle(
     key_store: &impl OpenMlsCryptoProvider,
     identity: Vec<u8>,
-    credential_type: CredentialType,
     signature_scheme: SignatureScheme,
 ) -> Result<Credential, CredentialError> {
-    let cb = CredentialBundle::new(identity, credential_type, signature_scheme, key_store)?;
-    let credential = cb.credential().clone();
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, key_store)
+        .unwrap()
+        .into_tuple();
+    let cert = create_test_certificate(0, pk).unwrap();
+    let cb = CredentialBundle::new(sk, cert); 
+       let credential = cb.credential().clone();
     key_store
         .key_store()
         .store(
@@ -73,7 +76,6 @@ fn test_mls_group_persistence(ciphersuite: Ciphersuite, backend: &impl OpenMlsCr
     let alice_credential = generate_credential_bundle(
         backend,
         "Alice".into(),
-        CredentialType::Basic,
         ciphersuite.signature_algorithm(),
     )
     .expect("An unexpected error occurred.");
@@ -134,7 +136,6 @@ fn remover(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider) {
     let alice_credential = generate_credential_bundle(
         backend,
         "Alice".into(),
-        CredentialType::Basic,
         ciphersuite.signature_algorithm(),
     )
     .expect("An unexpected error occurred.");
@@ -142,7 +143,6 @@ fn remover(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider) {
     let bob_credential = generate_credential_bundle(
         backend,
         "Bob".into(),
-        CredentialType::Basic,
         ciphersuite.signature_algorithm(),
     )
     .expect("An unexpected error occurred.");
@@ -150,7 +150,6 @@ fn remover(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider) {
     let charlie_credential = generate_credential_bundle(
         backend,
         "Charly".into(),
-        CredentialType::Basic,
         ciphersuite.signature_algorithm(),
     )
     .expect("An unexpected error occurred.");
@@ -306,7 +305,6 @@ fn export_secret(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider)
     let alice_credential = generate_credential_bundle(
         backend,
         "Alice".into(),
-        CredentialType::Basic,
         ciphersuite.signature_algorithm(),
     )
     .expect("An unexpected error occurred.");
@@ -359,6 +357,7 @@ fn test_invalid_plaintext(ciphersuite: Ciphersuite, backend: &impl OpenMlsCrypto
         mls_group_config,
         number_of_clients,
         CodecUse::StructMessages,
+        backend
     );
     // Create a basic group with more than 4 members to create a tree with intermediate nodes.
     let group_id = setup
@@ -445,7 +444,6 @@ fn test_pending_commit_logic(ciphersuite: Ciphersuite, backend: &impl OpenMlsCry
     let alice_credential = generate_credential_bundle(
         backend,
         "Alice".into(),
-        CredentialType::Basic,
         ciphersuite.signature_algorithm(),
     )
     .expect("An unexpected error occurred.");
@@ -453,7 +451,6 @@ fn test_pending_commit_logic(ciphersuite: Ciphersuite, backend: &impl OpenMlsCry
     let bob_credential = generate_credential_bundle(
         backend,
         "Bob".into(),
-        CredentialType::Basic,
         ciphersuite.signature_algorithm(),
     )
     .expect("An unexpected error occurred.");

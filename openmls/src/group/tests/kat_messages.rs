@@ -15,7 +15,7 @@ use crate::{
     messages::*,
     prelude_test::{hash_ref::KeyPackageRef, signable::Verifiable},
     schedule::psk::*,
-    test_utils::*,
+    test_utils::{test_framework::test_x509::create_test_certificate, *},
     tree::sender_ratchet::*,
     treesync::node::Node,
     versions::ProtocolVersion,
@@ -59,13 +59,11 @@ pub struct MessagesTestVector {
 pub fn generate_test_vector(ciphersuite: Ciphersuite) -> MessagesTestVector {
     let crypto = OpenMlsRustCrypto::default();
     let ciphersuite_name = ciphersuite;
-    let credential_bundle = CredentialBundle::new(
-        b"OpenMLS rocks".to_vec(),
-        CredentialType::Basic,
-        SignatureScheme::from(ciphersuite_name),
-        &crypto,
-    )
-    .expect("An unexpected error occurred.");
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, &crypto)
+        .unwrap()
+        .into_tuple();
+    let cert = create_test_certificate(0, pk).unwrap();
+    let credential_bundle = CredentialBundle::new(sk, cert);
     let key_package_bundle =
         KeyPackageBundle::new(&[ciphersuite_name], &credential_bundle, &crypto, Vec::new())
             .expect("An unexpected error occurred.");
@@ -137,13 +135,11 @@ pub fn generate_test_vector(ciphersuite: Ciphersuite) -> MessagesTestVector {
     };
 
     // Create proposal to add a user
-    let joiner_credential_bundle = CredentialBundle::new(
-        b"MLS rocks".to_vec(),
-        CredentialType::Basic,
-        SignatureScheme::from(ciphersuite_name),
-        &crypto,
-    )
-    .expect("An unexpected error occurred.");
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, &crypto)
+        .unwrap()
+        .into_tuple();
+    let cert = create_test_certificate(0, pk).unwrap();
+    let joiner_credential_bundle = CredentialBundle::new(sk, cert);
     let joiner_key_package_bundle = KeyPackageBundle::new(
         &[ciphersuite_name],
         &joiner_credential_bundle,

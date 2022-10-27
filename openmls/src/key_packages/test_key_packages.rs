@@ -6,13 +6,11 @@ use crate::{extensions::*, key_packages::*};
 
 #[apply(ciphersuites_and_backends)]
 fn generate_key_package(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider) {
-    let credential_bundle = CredentialBundle::new(
-        vec![1, 2, 3],
-        CredentialType::Basic,
-        ciphersuite.into(),
-        backend,
-    )
-    .expect("An unexpected error occurred.");
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(0, pk).unwrap();
+    let credential_bundle = CredentialBundle::new(sk, cert);
 
     // Generate a valid KeyPackage.
     let lifetime_extension = Extension::LifeTime(LifetimeExtension::new(60));
@@ -55,9 +53,11 @@ fn decryption_key_index_computation(
     backend: &impl OpenMlsCryptoProvider,
 ) {
     let id = vec![1, 2, 3];
-    let credential_bundle =
-        CredentialBundle::new(id, CredentialType::Basic, ciphersuite.into(), backend)
-            .expect("An unexpected error occurred.");
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(0, pk).unwrap();
+    let credential_bundle = CredentialBundle::new(sk, cert);
     let mut kpb = KeyPackageBundle::new(&[ciphersuite], &credential_bundle, backend, Vec::new())
         .expect("An unexpected error occurred.")
         .unsigned();
@@ -80,9 +80,11 @@ fn decryption_key_index_computation(
 #[apply(ciphersuites_and_backends)]
 fn key_package_id_extension(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider) {
     let id = vec![1, 2, 3];
-    let credential_bundle =
-        CredentialBundle::new(id, CredentialType::Basic, ciphersuite.into(), backend)
-            .expect("An unexpected error occurred.");
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(0, pk).unwrap();
+    let credential_bundle = CredentialBundle::new(sk, cert);
     let kpb = KeyPackageBundle::new(
         &[ciphersuite],
         &credential_bundle,
@@ -115,15 +117,12 @@ fn test_mismatch(backend: &impl OpenMlsCryptoProvider) {
     // === KeyPackageBundle negative test ===
 
     let ciphersuite_name = Ciphersuite::MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519;
-    let signature_scheme = SignatureScheme::ECDSA_SECP256R1_SHA256;
 
-    let credential_bundle = CredentialBundle::new(
-        vec![1, 2, 3],
-        CredentialType::Basic,
-        signature_scheme,
-        backend,
-    )
-    .expect("Could not create credential bundle");
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(0, pk).unwrap();
+    let credential_bundle = CredentialBundle::new(sk, cert);
 
     assert_eq!(
         KeyPackageBundle::new(&[ciphersuite_name], &credential_bundle, backend, vec![],),
@@ -133,15 +132,11 @@ fn test_mismatch(backend: &impl OpenMlsCryptoProvider) {
     // === KeyPackageBundle positive test ===
 
     let ciphersuite_name = Ciphersuite::MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519;
-    let signature_scheme = SignatureScheme::ED25519;
-
-    let credential_bundle = CredentialBundle::new(
-        vec![1, 2, 3],
-        CredentialType::Basic,
-        signature_scheme,
-        backend,
-    )
-    .expect("Could not create credential bundle");
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+        .unwrap()
+        .into_tuple();
+    let cert = test_framework::test_x509::create_test_certificate(0, pk).unwrap();
+    let credential_bundle = CredentialBundle::new(sk, cert);
 
     assert!(
         KeyPackageBundle::new(&[ciphersuite_name], &credential_bundle, backend, vec![]).is_ok()

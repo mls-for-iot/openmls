@@ -45,9 +45,10 @@ use tls_codec::*;
 pub mod client;
 pub mod errors;
 pub mod messages;
+pub mod test_x509;
 
-use self::client::*;
 use self::errors::*;
+use self::{client::*, test_x509::create_test_certificate};
 
 #[derive(Clone)]
 /// The `Group` struct represents the "global" shared state of the group. Note,
@@ -119,13 +120,17 @@ pub struct MlsGroupTestSetup {
 // references to the KeyStore) only after we do that. This has to happen in the
 // context that the `MlsGroupTestSetup` lives in, because otherwise the
 // references don't live long enough.
-
 impl MlsGroupTestSetup {
     /// Create a new `MlsGroupTestSetup` with the given default
     /// `MlsGroupConfig` and the given number of clients. For lifetime
     /// reasons, `create_clients` has to be called in addition with the same
     /// number of clients.
-    pub fn new(default_mgc: MlsGroupConfig, number_of_clients: usize, use_codec: CodecUse) -> Self {
+    pub fn new(
+        default_mgc: MlsGroupConfig,
+        number_of_clients: usize,
+        use_codec: CodecUse,
+        backend: &impl OpenMlsCryptoProvider,
+    ) -> Self {
         let mut clients = HashMap::new();
         for i in 0..number_of_clients {
             let identity = i.to_be_bytes().to_vec();
@@ -133,13 +138,11 @@ impl MlsGroupTestSetup {
             let crypto = OpenMlsRustCrypto::default();
             let mut credentials = HashMap::new();
             for ciphersuite in crypto.crypto().supported_ciphersuites().iter() {
-                let cb = CredentialBundle::new(
-                    identity.clone(),
-                    CredentialType::Basic,
-                    SignatureScheme::from(*ciphersuite),
-                    &crypto,
-                )
-                .expect("An unexpected error occurred.");
+                let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, backend)
+                    .unwrap()
+                    .into_tuple();
+                let cert = create_test_certificate(0, pk).unwrap();
+                let cb = CredentialBundle::new(sk, cert);
                 let credential = cb.credential().clone();
                 crypto
                     .key_store()
@@ -325,7 +328,7 @@ impl MlsGroupTestSetup {
         group.members = sender
             .get_members_of_group(&group.group_id)?
             .iter()
-            .map(|(index, cred)| (*index, cred.identity().to_vec()))
+            .map(|(index, cred)| (*index, cred.identity().to_be_bytes().to_vec()))
             .collect();
         group.public_tree = sender_group.export_ratchet_tree();
         group.exporter_secret = sender_group.export_secret(&sender.crypto, "test", &[], 32)?;

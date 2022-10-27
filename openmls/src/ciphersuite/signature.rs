@@ -59,8 +59,8 @@ pub struct SignaturePrivateKey {
 /// A public signature key.
 #[derive(Eq, PartialEq, Hash, Debug, Clone, Serialize, Deserialize)]
 pub struct SignaturePublicKey {
-    signature_scheme: SignatureScheme,
-    pub(in crate::ciphersuite) value: VLBytes,
+    pub(crate) signature_scheme: SignatureScheme,
+    pub(crate) value: VLBytes,
 }
 
 /// A signature keypair.
