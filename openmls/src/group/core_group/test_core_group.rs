@@ -677,7 +677,6 @@ fn setup_client(
             .expect("An unexpected error occurred.");
     (credential_bundle, key_package_bundle)
 }
-
 #[apply(ciphersuites_and_backends)]
 fn test_proposal_application_after_self_was_removed(
     ciphersuite: Ciphersuite,
@@ -695,6 +694,7 @@ fn test_proposal_application_after_self_was_removed(
 
     let (alice_credential_bundle, alice_kpb) = setup_client("Alice", ciphersuite, backend);
     let (_, bob_kpb) = setup_client("Bob", ciphersuite, backend);
+    let hash_p = bob_kpb.key_package.clone();
     let (_, charlie_kpb) = setup_client("Charlie", ciphersuite, backend);
 
     let mut alice_group = CoreGroup::builder(GroupId::random(backend), alice_kpb)
@@ -741,13 +741,12 @@ fn test_proposal_application_after_self_was_removed(
         backend,
     )
     .expect("Error joining group.");
-
     // Alice adds Charlie and removes Bob in the same commit.
     let bob_kp_ref = alice_group
         .treesync()
         .leaves()
         .values()
-        .find(|&kp| kp.credential().identity() == 1)
+        .find(|&kp| kp.credential().identity() == hash_p.credential().identity())
         .expect("Couldn't find Bob in tree.")
         .hash_ref(backend.crypto())
         .expect("error computing hash ref");
@@ -847,5 +846,8 @@ fn test_proposal_application_after_self_was_removed(
     assert_eq!(alice_members, bob_members,);
     assert_eq!(bob_members, charlie_members);
 
-    assert_eq!(bob_members[0].identity(), alice_credential_bundle.credential().identity());
+    assert_eq!(
+        bob_members[0].identity(),
+        alice_credential_bundle.credential().identity()
+    );
 }

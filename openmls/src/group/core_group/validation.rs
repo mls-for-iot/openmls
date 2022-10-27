@@ -130,7 +130,7 @@ impl CoreGroup {
                 .add_proposal()
                 .key_package()
                 .credential()
-                .identity().to_be_bytes()
+                .identity()
                 .to_vec();
             // ValSem100
             if !identity_set.insert(identity) {
@@ -221,7 +221,7 @@ impl CoreGroup {
         }
 
         for (_index, key_package) in self.treesync().full_leaves()? {
-            let identity = key_package.credential().identity().to_be_bytes().to_vec();
+            let identity = key_package.credential().identity().to_vec();
             // ValSem103
             if identity_set.contains(&identity) {
                 return Err(ProposalValidationError::ExistingIdentityAddProposal);

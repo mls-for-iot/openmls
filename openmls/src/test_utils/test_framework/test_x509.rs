@@ -33,7 +33,13 @@ pub fn create_test_certificate(
     pk: SignaturePublicKey,
 ) -> Result<X509, ErrorStack> {
     use openssl::pkey::Id;
-
+    use rand::{distributions::Alphanumeric, thread_rng, Rng};
+    let rand_string: String = thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(15)
+        .map(char::from)
+        .collect();
+    println!(" random : {}", rand_string);
     let sk = PKey::generate_ed25519().expect("failed to generate ed25519 sk");
     let mut builder = X509::builder()?;
     builder.set_version(0)?;
@@ -44,7 +50,7 @@ pub fn create_test_certificate(
     builder.set_serial_number(&asn1_int)?;
     let openssl_pk = openssl::pkey::PKey::public_key_from_raw_bytes(pk.as_slice(), Id::ED25519)?;
     builder.set_pubkey(&openssl_pk)?;
-    let subject_name = build_x509_name("DE", "SH", "TEST", "TEStORG", "HEATSENSOR")?;
+    let subject_name = build_x509_name("DE", "SH", &rand_string, &rand_string, &rand_string)?;
     builder.set_subject_name(&subject_name)?;
     let end_date = Asn1Time::days_from_now(30)?;
     builder.set_not_after(&end_date)?;

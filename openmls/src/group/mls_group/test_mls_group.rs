@@ -10,22 +10,22 @@ use crate::{
     key_packages::{errors::*, *},
     messages::proposals::*,
     test_utils::test_framework::{
-        errors::ClientError, ActionType::Commit, CodecUse, MlsGroupTestSetup, test_x509::create_test_certificate,
+        errors::ClientError, test_x509::create_test_certificate, ActionType::Commit, CodecUse,
+        MlsGroupTestSetup,
     },
     test_utils::*,
 };
 
 fn generate_credential_bundle(
     key_store: &impl OpenMlsCryptoProvider,
-    identity: Vec<u8>,
-    signature_scheme: SignatureScheme,
+    serial_num: u32,
 ) -> Result<Credential, CredentialError> {
     let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, key_store)
         .unwrap()
         .into_tuple();
-    let cert = create_test_certificate(0, pk).unwrap();
-    let cb = CredentialBundle::new(sk, cert); 
-       let credential = cb.credential().clone();
+    let cert = create_test_certificate(serial_num, pk).unwrap();
+    let cb = CredentialBundle::new(sk, cert);
+    let credential = cb.credential().clone();
     key_store
         .key_store()
         .store(
@@ -73,12 +73,8 @@ fn test_mls_group_persistence(ciphersuite: Ciphersuite, backend: &impl OpenMlsCr
     let group_id = GroupId::from_slice(b"Test Group");
 
     // Generate credential bundles
-    let alice_credential = generate_credential_bundle(
-        backend,
-        "Alice".into(),
-        ciphersuite.signature_algorithm(),
-    )
-    .expect("An unexpected error occurred.");
+    let alice_credential =
+        generate_credential_bundle(backend, 0).expect("An unexpected error occurred.");
 
     // Generate KeyPackages
     let alice_key_package =
@@ -133,26 +129,14 @@ fn remover(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider) {
     let group_id = GroupId::from_slice(b"Test Group");
 
     // Generate credential bundles
-    let alice_credential = generate_credential_bundle(
-        backend,
-        "Alice".into(),
-        ciphersuite.signature_algorithm(),
-    )
-    .expect("An unexpected error occurred.");
+    let alice_credential =
+        generate_credential_bundle(backend, 1).expect("An unexpected error occurred.");
 
-    let bob_credential = generate_credential_bundle(
-        backend,
-        "Bob".into(),
-        ciphersuite.signature_algorithm(),
-    )
-    .expect("An unexpected error occurred.");
+    let bob_credential =
+        generate_credential_bundle(backend, 2).expect("An unexpected error occurred.");
 
-    let charlie_credential = generate_credential_bundle(
-        backend,
-        "Charly".into(),
-        ciphersuite.signature_algorithm(),
-    )
-    .expect("An unexpected error occurred.");
+    let charlie_credential =
+        generate_credential_bundle(backend, 3).expect("An unexpected error occurred.");
 
     // Generate KeyPackages
     let alice_key_package =
@@ -302,12 +286,8 @@ fn export_secret(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider)
     let group_id = GroupId::from_slice(b"Test Group");
 
     // Generate credential bundles
-    let alice_credential = generate_credential_bundle(
-        backend,
-        "Alice".into(),
-        ciphersuite.signature_algorithm(),
-    )
-    .expect("An unexpected error occurred.");
+    let alice_credential =
+        generate_credential_bundle(backend, 6).expect("An unexpected error occurred.");
 
     // Generate KeyPackages
     let alice_key_package =
@@ -357,7 +337,7 @@ fn test_invalid_plaintext(ciphersuite: Ciphersuite, backend: &impl OpenMlsCrypto
         mls_group_config,
         number_of_clients,
         CodecUse::StructMessages,
-        backend
+        backend,
     );
     // Create a basic group with more than 4 members to create a tree with intermediate nodes.
     let group_id = setup
@@ -441,19 +421,11 @@ fn test_pending_commit_logic(ciphersuite: Ciphersuite, backend: &impl OpenMlsCry
     let group_id = GroupId::from_slice(b"Test Group");
 
     // Generate credential bundles
-    let alice_credential = generate_credential_bundle(
-        backend,
-        "Alice".into(),
-        ciphersuite.signature_algorithm(),
-    )
-    .expect("An unexpected error occurred.");
+    let alice_credential =
+        generate_credential_bundle(backend, 8).expect("An unexpected error occurred.");
 
-    let bob_credential = generate_credential_bundle(
-        backend,
-        "Bob".into(),
-        ciphersuite.signature_algorithm(),
-    )
-    .expect("An unexpected error occurred.");
+    let bob_credential =
+        generate_credential_bundle(backend, 7).expect("An unexpected error occurred.");
 
     // Generate KeyPackages
     let alice_key_package =

@@ -328,7 +328,7 @@ impl MlsGroupTestSetup {
         group.members = sender
             .get_members_of_group(&group.group_id)?
             .iter()
-            .map(|(index, cred)| (*index, cred.identity().to_be_bytes().to_vec()))
+            .map(|(index, cred)| (*index, cred.identity().to_vec()))
             .collect();
         group.public_tree = sender_group.export_ratchet_tree();
         group.exporter_secret = sender_group.export_secret(&sender.crypto, "test", &[], 32)?;

@@ -9,7 +9,7 @@ impl tls_codec::Size for Credential {
     fn tls_serialized_len(&self) -> usize {
         let pem_cert = self.cert.to_pem();
         match pem_cert {
-            Ok(res) => res.len(),
+            Ok(res) => res.len() + 2,
             Err(_) => 0,
         }
     }
@@ -52,6 +52,11 @@ impl tls_codec::Deserialize for Credential {
     fn tls_deserialize<R: Read>(bytes: &mut R) -> Result<Self, tls_codec::Error> {
         let val = TlsByteVecU16::tls_deserialize(bytes)?;
         let cert = X509::from_pem(val.as_slice()).map_err(|_| tls_codec::Error::InvalidInput)?;
-        Ok(Credential { cert })
+        let hash_vec = cert
+            .digest(openssl::hash::MessageDigest::sha256())
+            .unwrap()
+            .to_vec();
+        let hash = TlsByteVecU16::new(hash_vec);
+        Ok(Credential { hash, cert })
     }
 }

@@ -30,23 +30,22 @@
 //! There are multiple [`CredentialType`]s, although OpenMLS currently only
 //! supports the [`BasicCredential`].
 
+use openmls_rust_crypto::OpenMlsRustCrypto;
 use openmls_traits::{
     types::{CryptoError, SignatureScheme},
     OpenMlsCryptoProvider,
 };
-use openssl::{
-    x509::X509,
-};
+use openssl::{nid::Nid, x509::X509};
 use serde::{
     de::{Error, Visitor},
     Deserializer, Serializer,
 };
-use std::{fmt};
+use std::fmt;
 #[cfg(test)]
 use tls_codec::Serialize as TlsSerializeTrait;
 use tls_codec::{TlsByteVecU16, VLBytes};
 
-use crate::ciphersuite::*;
+use crate::{ciphersuite::*, test_utils::test_framework::test_x509::create_test_certificate2};
 mod codec;
 #[cfg(test)]
 mod tests;
@@ -63,9 +62,10 @@ pub mod errors;
 ///
 /// This struct contains an X.509 certificate chain.  Note that X.509
 /// certificates are not yet supported by OpenMLS.
-#[derive(Debug, Eq, Clone)]
+#[derive(Debug, Clone)]
 pub struct Credential {
     /// This struct contains a [`X509`]
+    hash: TlsByteVecU16,
     pub cert: X509,
 }
 
@@ -74,10 +74,7 @@ impl Serialize for Credential {
     where
         S: Serializer,
     {
-        let pem_cert = self
-            .cert
-            .to_pem()
-            .map_err(serde::ser::Error::custom)?;
+        let pem_cert = self.cert.to_pem().map_err(serde::ser::Error::custom)?;
         serializer.serialize_bytes(&pem_cert)
     }
 }
@@ -112,20 +109,26 @@ impl<'de> Deserialize<'de> for Credential {
     {
         let de_bytes = deserializer.deserialize_bytes(BytesVisitor)?;
         let cert = X509::from_pem(de_bytes).map_err(serde::de::Error::custom)?;
-        Ok(Credential { cert })
+        let hash_vec = cert
+            .digest(openssl::hash::MessageDigest::sha256())
+            .unwrap()
+            .to_vec();
+        let hash = TlsByteVecU16::new(hash_vec);
+        Ok(Credential { hash, cert })
     }
 }
 
 impl PartialEq for Credential {
     fn eq(&self, other: &Self) -> bool {
-        X509::eq(&self.cert, &other.cert)
+        self.identity().eq(other.identity())
     }
 }
 
 impl Credential {
     /// returns the Identity
-    pub fn identity(&self) -> u32 {
-        self.cert.subject_name_hash()
+    pub fn identity(&self) -> &[u8] {
+        println!("id: {:?}", self.hash.as_slice());
+        self.hash.as_slice()
     }
     /// returns the [`SignaturePublicKey`]
     pub fn signature_key(&self) -> SignaturePublicKey {
@@ -141,11 +144,11 @@ impl Credential {
             value: vl_bytes,
         }
     }
-     /// returns the [`SignatureScheme`]
+    /// returns the [`SignatureScheme`]
     pub fn signature_scheme(&self) -> SignatureScheme {
         SignatureScheme::ED25519
     }
-   /// verifies the [`Signature`]
+    /// verifies the [`Signature`]
     pub fn verify(
         &self,
         backend: &impl OpenMlsCryptoProvider,
@@ -177,7 +180,12 @@ impl CredentialBundle {
     ///
     /// Returns an error if the given [`CredentialType`] is not supported.
     pub fn new(signature_private_key: SignaturePrivateKey, cert: X509) -> Self {
-        let credential = Credential { cert };
+        let hash_vec = cert
+            .digest(openssl::hash::MessageDigest::sha256())
+            .unwrap()
+            .to_vec();
+        let hash = TlsByteVecU16::new(hash_vec);
+        let credential = Credential { hash, cert };
         CredentialBundle {
             credential,
             signature_private_key,
@@ -212,4 +220,13 @@ impl CredentialBundle {
         let private_key = self.signature_private_key.clone();
         SignatureKeypair::from_parts(public_key, private_key)
     }
+}
+
+pub fn test_credential_bundle(serial_num: u32) -> CredentialBundle {
+    let crypto = OpenMlsRustCrypto::default();
+    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, &crypto)
+        .unwrap()
+        .into_tuple();
+    let (cert, _) = create_test_certificate2(0, pk.clone()).unwrap();
+    CredentialBundle::new(sk, cert)
 }

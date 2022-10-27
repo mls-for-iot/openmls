@@ -87,3 +87,7 @@ fn test_credential(backend: &impl OpenMlsCryptoProvider, ciphersuite: Ciphersuit
         .into_iter()
         .eq(kp.credential().signature_key().as_slice().into_iter()));
 }
+
+fn test_group(){
+    
+}
