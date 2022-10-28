@@ -30,7 +30,6 @@
 //! There are multiple [`CredentialType`]s, although OpenMLS currently only
 //! supports the [`BasicCredential`].
 
-use openmls_rust_crypto::OpenMlsRustCrypto;
 use openmls_traits::{
     types::{CryptoError, SignatureScheme},
     OpenMlsCryptoProvider,
@@ -45,7 +44,7 @@ use std::fmt;
 use tls_codec::Serialize as TlsSerializeTrait;
 use tls_codec::{TlsByteVecU16, VLBytes};
 
-use crate::{ciphersuite::*, test_utils::test_framework::test_x509::create_test_certificate2};
+use crate::ciphersuite::*;
 mod codec;
 #[cfg(test)]
 mod tests;
@@ -220,13 +219,4 @@ impl CredentialBundle {
         let private_key = self.signature_private_key.clone();
         SignatureKeypair::from_parts(public_key, private_key)
     }
-}
-
-pub fn test_credential_bundle(serial_num: u32) -> CredentialBundle {
-    let crypto = OpenMlsRustCrypto::default();
-    let (sk, pk) = SignatureKeypair::new(SignatureScheme::ED25519, &crypto)
-        .unwrap()
-        .into_tuple();
-    let (cert, _) = create_test_certificate2(0, pk.clone()).unwrap();
-    CredentialBundle::new(sk, cert)
 }
