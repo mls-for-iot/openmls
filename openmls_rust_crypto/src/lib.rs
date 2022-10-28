@@ -6,7 +6,7 @@
 use openmls_memory_keystore::MemoryKeyStore;
 use openmls_traits::OpenMlsCryptoProvider;
 
-mod provider;
+pub mod provider;
 pub use provider::*;
 
 #[derive(Default, Debug)]

@@ -7,7 +7,6 @@ use aes_gcm::{
 use chacha20poly1305::ChaCha20Poly1305;
 // See https://github.com/rust-analyzer/rust-analyzer/issues/7243
 // for the rust-analyzer issue with the following line.
-use ed25519_dalek::Signer as DalekSigner;
 use hkdf::Hkdf;
 use hpke::Hpke;
 use hpke_rs_crypto::types as hpke_types;
@@ -20,9 +19,11 @@ use openmls_traits::{
         HpkeConfig, HpkeKdfType, HpkeKemType, HpkeKeyPair, SignatureScheme,
     },
 };
-use p256::{
-    ecdsa::{signature::Verifier, Signature, SigningKey, VerifyingKey},
-    EncodedPoint,
+use openssl::{
+    error::ErrorStack,
+    hash::MessageDigest,
+    pkey::{Id, PKey, Private},
+    sign::{Signer, Verifier},
 };
 use rand::{RngCore, SeedableRng};
 use sha2::{Digest, Sha256, Sha384, Sha512};
@@ -74,8 +75,7 @@ impl OpenMlsCrypto for RustCrypto {
     fn supports(&self, ciphersuite: Ciphersuite) -> Result<(), CryptoError> {
         match ciphersuite {
             Ciphersuite::MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519
-            | Ciphersuite::MLS_128_DHKEMX25519_CHACHA20POLY1305_SHA256_Ed25519
-            | Ciphersuite::MLS_128_DHKEMP256_AES128GCM_SHA256_P256 => Ok(()),
+            | Ciphersuite::MLS_128_DHKEMX25519_CHACHA20POLY1305_SHA256_Ed25519 => Ok(()),
             _ => Err(CryptoError::UnsupportedCiphersuite),
         }
     }
@@ -84,7 +84,6 @@ impl OpenMlsCrypto for RustCrypto {
         vec![
             Ciphersuite::MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519,
             Ciphersuite::MLS_128_DHKEMX25519_CHACHA20POLY1305_SHA256_Ed25519,
-            Ciphersuite::MLS_128_DHKEMP256_AES128GCM_SHA256_P256,
         ]
     }
 
@@ -221,22 +220,14 @@ impl OpenMlsCrypto for RustCrypto {
         alg: openmls_traits::types::SignatureScheme,
     ) -> Result<(Vec<u8>, Vec<u8>), openmls_traits::types::CryptoError> {
         match alg {
-            SignatureScheme::ECDSA_SECP256R1_SHA256 => {
-                let mut rng = self
-                    .rng
-                    .write()
-                    .map_err(|_| CryptoError::InsufficientRandomness)?;
-                let k = SigningKey::random(&mut *rng);
-                let pk = k.verifying_key().to_encoded_point(false).as_bytes().into();
-                Ok((k.to_bytes().as_slice().into(), pk))
-            }
             SignatureScheme::ED25519 => {
-                // XXX: We can't use our RNG here
-                let k = ed25519_dalek::Keypair::generate(&mut rand_07::rngs::OsRng).to_bytes();
-                let pk = k[ed25519_dalek::SECRET_KEY_LENGTH..].to_vec();
-                // full key here because we need it to sign...
-                let sk_pk = k.into();
-                Ok((sk_pk, pk))
+                let sk = PKey::generate_ed25519().expect("failed to generate ed25519 sk");
+                Ok((
+                    sk.raw_private_key()
+                        .map_err(|_| CryptoError::CryptoLibraryError)?,
+                    sk.raw_public_key()
+                        .map_err(|_| CryptoError::CryptoLibraryError)?,
+                ))
             }
             _ => Err(CryptoError::UnsupportedSignatureScheme),
         }
@@ -250,27 +241,19 @@ impl OpenMlsCrypto for RustCrypto {
         signature: &[u8],
     ) -> Result<(), openmls_traits::types::CryptoError> {
         match alg {
-            SignatureScheme::ECDSA_SECP256R1_SHA256 => {
-                let k = VerifyingKey::from_encoded_point(
-                    &EncodedPoint::from_bytes(pk).map_err(|_| CryptoError::CryptoLibraryError)?,
-                )
-                .map_err(|_| CryptoError::CryptoLibraryError)?;
-                k.verify(
-                    data,
-                    &Signature::from_der(signature).map_err(|_| CryptoError::InvalidSignature)?,
-                )
-                .map_err(|_| CryptoError::InvalidSignature)
-            }
             SignatureScheme::ED25519 => {
-                let k = ed25519_dalek::PublicKey::from_bytes(pk)
+                let k = PKey::public_key_from_raw_bytes(pk, Id::ED25519)
                     .map_err(|_| CryptoError::CryptoLibraryError)?;
-                if signature.len() != ed25519_dalek::SIGNATURE_LENGTH {
-                    return Err(CryptoError::CryptoLibraryError);
+                let mut verifier = Verifier::new(MessageDigest::null(), &k)
+                    .map_err(|_| CryptoError::CryptoLibraryError)?;
+                let verified = verifier
+                    .verify_oneshot(signature, data)
+                    .map_err(|_| CryptoError::InvalidSignature)?;
+                if verified {
+                    Ok(())
+                } else {
+                    Err(CryptoError::InvalidSignature)
                 }
-                let mut sig = [0u8; ed25519_dalek::SIGNATURE_LENGTH];
-                sig.clone_from_slice(signature);
-                k.verify_strict(data, &ed25519_dalek::Signature::from(sig))
-                    .map_err(|_| CryptoError::InvalidSignature)
             }
             _ => Err(CryptoError::UnsupportedSignatureScheme),
         }
@@ -283,16 +266,14 @@ impl OpenMlsCrypto for RustCrypto {
         key: &[u8],
     ) -> Result<Vec<u8>, openmls_traits::types::CryptoError> {
         match alg {
-            SignatureScheme::ECDSA_SECP256R1_SHA256 => {
-                let k = SigningKey::from_bytes(key).map_err(|_| CryptoError::CryptoLibraryError)?;
-                let signature = k.sign(data);
-                Ok(signature.to_der().to_bytes().into())
-            }
             SignatureScheme::ED25519 => {
-                let k = ed25519_dalek::Keypair::from_bytes(key)
+                let k = PKey::private_key_from_raw_bytes(key, Id::ED25519)
                     .map_err(|_| CryptoError::CryptoLibraryError)?;
-                let signature = k.sign(data);
-                Ok(signature.to_bytes().into())
+                let mut signer = Signer::new(MessageDigest::null(), &k)
+                    .map_err(|_| CryptoError::CryptoLibraryError)?;
+                Ok(signer
+                    .sign_oneshot_to_vec(data)
+                    .map_err(|_| CryptoError::CryptoLibraryError)?)
             }
             _ => Err(CryptoError::UnsupportedSignatureScheme),
         }
