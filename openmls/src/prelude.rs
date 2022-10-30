@@ -59,4 +59,4 @@ pub use openmls_traits::{
     OpenMlsCryptoProvider,
 };
 
-pub use openmls_rust_crypto::OpenMlsRustCrypto;
+pub use openmls_rust_crypto::*;
