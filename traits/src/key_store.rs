@@ -1,12 +1,12 @@
 //! # OpenMLS Key Store Trait
 
 use std::fmt::Debug;
-
+/// The Key Store trait
 pub trait FromKeyStoreValue: Sized {
     type Error: std::error::Error + Debug;
     fn from_key_store_value(ksv: &[u8]) -> Result<Self, Self::Error>;
 }
-
+/// The Key Store trait
 pub trait ToKeyStoreValue {
     type Error: std::error::Error + Debug;
     fn to_key_store_value(&self) -> Result<Vec<u8>, Self::Error>;

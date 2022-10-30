@@ -34,6 +34,7 @@ fn store_credential_bundle_in_keystore(
     crypto_backend: &OpenMlsRustCrypto,
     credential_bundle: &CredentialBundle,
 ) {
+    crypto_backend.key_store().
     crypto_backend
         .key_store()
         .store(
