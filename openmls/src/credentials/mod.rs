@@ -63,8 +63,9 @@ pub mod errors;
 /// certificates are not yet supported by OpenMLS.
 #[derive(Debug, Clone)]
 pub struct Credential {
-    /// This struct contains a [`X509`]
+    /// This struct contains a hash
     hash: TlsByteVecU16,
+    /// This struct contains a [`X509`] cert
     pub cert: X509,
 }
 
