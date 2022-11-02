@@ -197,6 +197,11 @@ impl CredentialBundle {
         &self.credential
     }
 
+    /// Returns a reference to the [`Credential`].
+    pub fn signature_private_key(&self) -> &SignaturePrivateKey {
+        &self.signature_private_key
+    }
+
     /// Separates the bundle into the [`Credential`] and the [`SignaturePrivateKey`].
     pub fn into_parts(self) -> (Credential, SignaturePrivateKey) {
         (self.credential, self.signature_private_key)
