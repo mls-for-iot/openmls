@@ -18,11 +18,16 @@ impl OpenMlsKeyStore for MemoryKeyStore {
         let value = v
             .to_key_store_value()
             .map_err(|_| Error::SerializationError)?;
+        println!("ser val: {:?}", value);
         // We unwrap here, because this is the only function claiming a write
         // lock on `credential_bundles`. It only holds the lock very briefly and
         // should not panic during that period.
         let mut values = self.values.write().unwrap();
         values.insert(k.to_vec(), value);
+        let test = values.clone().into_keys();
+        for val in test {
+            println!("val: {:?}", val)
+        }
         Ok(())
     }
 
@@ -36,6 +41,7 @@ impl OpenMlsKeyStore for MemoryKeyStore {
         // hold the lock very briefly and should not panic during that period.
         let values = self.values.read().unwrap();
         if let Some(value) = values.get(k) {
+            println!("geklappt");
             V::from_key_store_value(value).ok()
         } else {
             None
