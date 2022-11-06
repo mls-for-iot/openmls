@@ -89,7 +89,10 @@ use openmls_traits::{
     OpenMlsCryptoProvider,
 };
 use serde::{Deserialize, Serialize};
-use tls_codec::{Deserialize as TlsDeserializeTrait, Serialize as TlsSerializeTrait, TlsSize};
+use tls_codec::{
+    Deserialize as TlsDeserializeTrait, Serialize as TlsSerializeTrait, TlsDeserialize,
+    TlsSerialize, TlsSize,
+};
 
 // Private
 mod codec;
@@ -548,7 +551,7 @@ impl SignedStruct<KeyPackageBundlePayload> for KeyPackageBundle {
 
 /// A [`KeyPackageBundle`] contains a [`KeyPackage`], the corresponding private
 /// key, and a leaf secret.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TlsSerialize, TlsDeserialize, TlsSize)]
 #[cfg_attr(test, derive(PartialEq))]
 pub struct KeyPackageBundle {
     pub(crate) key_package: KeyPackage,

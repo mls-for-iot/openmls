@@ -49,7 +49,7 @@ impl From<(&str, &[u8])> for SignContent {
 }
 
 /// A private signature key.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TlsSize, TlsDeserialize, TlsSerialize)]
 #[cfg_attr(any(feature = "test-utils", test), derive(PartialEq, Eq))]
 pub struct SignaturePrivateKey {
     signature_scheme: SignatureScheme,

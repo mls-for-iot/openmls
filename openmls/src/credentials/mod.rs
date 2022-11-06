@@ -42,7 +42,7 @@ use serde::{
 use std::fmt;
 #[cfg(test)]
 use tls_codec::Serialize as TlsSerializeTrait;
-use tls_codec::{TlsByteVecU16, VLBytes};
+use tls_codec::{TlsByteVecU16, TlsDeserialize, TlsSerialize, TlsSize, VLBytes};
 
 use crate::ciphersuite::*;
 mod codec;
@@ -166,7 +166,7 @@ impl Credential {
 ///
 /// This struct contains a [`Credential`] and the private key corresponding to
 /// the signature key it contains.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TlsSize, TlsDeserialize, TlsSerialize)]
 #[cfg_attr(any(feature = "test-utils", test), derive(PartialEq))]
 pub struct CredentialBundle {
     credential: Credential,
