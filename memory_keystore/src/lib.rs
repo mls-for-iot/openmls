@@ -23,10 +23,6 @@ impl OpenMlsKeyStore for MemoryKeyStore {
         // should not panic during that period.
         let mut values = self.values.write().unwrap();
         values.insert(k.to_vec(), value);
-        let test = values.clone().into_keys();
-        for val in test {
-            println!("key: {:?}", val)
-        }
         Ok(())
     }
 
@@ -40,7 +36,6 @@ impl OpenMlsKeyStore for MemoryKeyStore {
         // hold the lock very briefly and should not panic during that period.
         let values = self.values.read().unwrap();
         if let Some(value) = values.get(k) {
-            println!("geklappt");
             V::from_key_store_value(value).ok()
         } else {
             None
