@@ -80,7 +80,7 @@ impl MlsGroup {
         mls_group_config: &MlsGroupConfig,
         welcome: Welcome,
         ratchet_tree: Option<Vec<Option<Node>>>,
-    ) -> Result<Self, WelcomeError> {
+    ) -> Result<(Self, Vec<u8>), WelcomeError> {
         let resumption_psk_store =
             ResumptionPskStore::new(mls_group_config.number_of_resumption_psks);
         let (key_package_bundle, hash_ref) = welcome
@@ -117,7 +117,7 @@ impl MlsGroup {
             state_changed: InnerState::Changed,
         };
 
-        Ok(mls_group)
+        Ok((mls_group, hash_ref))
     }
 
     /// Join an existing group through an External Commit.

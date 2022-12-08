@@ -90,7 +90,7 @@ fn validation_test_setup(
         welcome,
         Some(alice_group.export_ratchet_tree()),
     )
-    .expect("error creating group from welcome");
+    .expect("error creating group from welcome").0;
 
     CommitValidationTestSetup {
         alice_group,
@@ -331,7 +331,7 @@ fn test_valsem201(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider
         welcome,
         Some(alice_group.export_ratchet_tree()),
     )
-    .expect("Error creating group.");
+    .expect("Error creating group.").0;
 
     // Create the remove.
     let serialized_remove = alice_group

@@ -227,7 +227,7 @@ fn test_valsem003(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider
         welcome,
         Some(alice_group.export_ratchet_tree()),
     )
-    .expect("error creating bob's group from welcome");
+    .expect("error creating bob's group from welcome").0;
 
     // Now that we added bob, Alice needs to create a new message that Bob can process.
     let (message, _welcome) = alice_group
@@ -433,7 +433,7 @@ fn test_valsem006(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider
 
     let mut bob_group =
         MlsGroup::new_from_welcome(backend, &mls_group_config, welcome, Some(ratchet_tree))
-            .expect("An unexpected error occurred.");
+            .expect("An unexpected error occurred.").0;
 
     let err = bob_group
         .parse_message(message_in, backend)
@@ -525,7 +525,7 @@ fn test_valsem008(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider
         welcome,
         Some(alice_group.export_ratchet_tree()),
     )
-    .expect("error creating bob's group from welcome");
+    .expect("error creating bob's group from welcome").0;
 
     // Now that we added bob, Alice needs to create a new message that Bob can process.
     let (message, _welcome) = alice_group
@@ -640,7 +640,7 @@ fn test_valsem010(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider
         welcome,
         Some(alice_group.export_ratchet_tree()),
     )
-    .expect("error creating bob's group from welcome");
+    .expect("error creating bob's group from welcome").0;
 
     // Now that we added bob, Alice needs to create a new message that Bob can process.
     let (message, _welcome) = alice_group

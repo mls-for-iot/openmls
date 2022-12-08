@@ -132,7 +132,7 @@ impl Client {
         ratchet_tree: Option<Vec<Option<Node>>>,
     ) -> Result<(), ClientError> {
         let new_group: MlsGroup =
-            MlsGroup::new_from_welcome(&self.crypto, &mls_group_config, welcome, ratchet_tree)?;
+            MlsGroup::new_from_welcome(&self.crypto, &mls_group_config, welcome, ratchet_tree)?.0;
         self.groups
             .write()
             .expect("An unexpected error occurred.")

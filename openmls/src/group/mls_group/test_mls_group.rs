@@ -181,7 +181,7 @@ fn remover(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider) {
         welcome,
         Some(alice_group.export_ratchet_tree()),
     )
-    .expect("Error creating group from Welcome");
+    .expect("Error creating group from Welcome").0;
 
     // === Bob adds Charlie ===
     let (queued_messages, welcome) = match bob_group.add_members(backend, &[charlie_key_package]) {
@@ -213,7 +213,7 @@ fn remover(ciphersuite: Ciphersuite, backend: &impl OpenMlsCryptoProvider) {
         welcome,
         Some(bob_group.export_ratchet_tree()),
     )
-    .expect("Error creating group from Welcome");
+    .expect("Error creating group from Welcome").0;
 
     // === Alice removes Bob & Charlie commits ===
 
@@ -570,7 +570,7 @@ fn test_pending_commit_logic(ciphersuite: Ciphersuite, backend: &impl OpenMlsCry
         welcome_option.expect("no welcome after commit"),
         Some(alice_group.export_ratchet_tree()),
     )
-    .expect("error creating group from welcome");
+    .expect("error creating group from welcome").0;
 
     assert_eq!(
         bob_group.export_ratchet_tree(),

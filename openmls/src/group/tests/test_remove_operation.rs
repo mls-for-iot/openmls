@@ -80,7 +80,7 @@ fn test_remove_operation_variants(ciphersuite: Ciphersuite, backend: &impl OpenM
             welcome.clone(),
             Some(alice_group.export_ratchet_tree()),
         )
-        .expect("Error creating group from Welcome");
+        .expect("Error creating group from Welcome").0;
 
         let mut charlie_group = MlsGroup::new_from_welcome(
             backend,
@@ -88,7 +88,7 @@ fn test_remove_operation_variants(ciphersuite: Ciphersuite, backend: &impl OpenM
             welcome,
             Some(alice_group.export_ratchet_tree()),
         )
-        .expect("Error creating group from Welcome");
+        .expect("Error creating group from Welcome").0;
 
         // === Remove operation ===
 

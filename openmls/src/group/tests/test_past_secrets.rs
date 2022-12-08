@@ -123,7 +123,7 @@ fn test_past_secrets_in_group(ciphersuite: Ciphersuite, backend: &impl OpenMlsCr
             welcome,
             Some(alice_group.export_ratchet_tree()),
         )
-        .expect("Error creating group from Welcome");
+        .expect("Error creating group from Welcome").0;
 
         // Generate application message for different epochs
 

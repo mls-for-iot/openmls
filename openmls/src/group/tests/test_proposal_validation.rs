@@ -148,7 +148,7 @@ fn validation_test_setup(
         welcome,
         Some(alice_group.export_ratchet_tree()),
     )
-    .expect("error creating group from welcome");
+    .expect("error creating group from welcome").0;
 
     ProposalValidationTestSetup {
         alice_group,
