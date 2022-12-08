@@ -30,15 +30,6 @@ fn test_credential(backend: &impl OpenMlsCryptoProvider, ciphersuite: Ciphersuit
         .into_tuple();
     let (cert2, sk_cert2) = create_test_certificate2(2, pk3.clone()).unwrap();
     let credential_bundleb = CredentialBundle::new(sk2, cert2);
-    println!("key as pk {:?}", pk.as_slice());
-    println!(
-        "key as credential  {:?}",
-        credential_bundle.credential.signature_key().as_slice()
-    );
-    println!(
-        "{:?}",
-        credential_bundle.credential.cert.verify(&sk_cert).unwrap()
-    );
     assert!(credential_bundle.credential.cert.verify(&sk_cert).unwrap());
     assert!(pk
         .as_slice()
@@ -72,12 +63,6 @@ fn test_credential(backend: &impl OpenMlsCryptoProvider, ciphersuite: Ciphersuit
         &mut enc.as_slice(),
     )
     .expect("An unexpected error occurred.");
-    println!("key as pk slice {:?}", pk.as_slice());
-    println!(
-        "key as credential {:?}",
-        kp.credential().signature_key().as_slice()
-    );
-    println!("{:?}", kp.credential().cert.verify(&sk_cert).unwrap());
     assert!(kp.credential().cert.verify(&sk_cert).unwrap());
     assert!(pk
         .as_slice()

@@ -35,17 +35,12 @@ impl CoreGroup {
         match message.content_type() {
             // For application messages we allow messages for older epochs as well
             ContentType::Application => {
-                println!(" message epoch: {:?}", message.epoch());
-                println!("context epoch: {:?}", self.context().epoch());
-
                 if message.epoch() > self.context().epoch() {
                     return Err(ValidationError::WrongEpoch);
                 }
             }
             // For all other messages we only only accept the current epoch
             _ => {
-                println!(" message epoch: {:?}", message.epoch());
-                println!("context epoch: {:?}", self.context().epoch());
                 if message.epoch() != self.context().epoch() {
                     return Err(ValidationError::WrongEpoch);
                 }

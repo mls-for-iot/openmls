@@ -6,7 +6,9 @@ use crate::{
     credentials::CredentialBundle,
     group::GroupId,
     messages::{ConfirmationTag, EncryptedGroupSecrets, GroupInfoTBS, Welcome},
-    versions::ProtocolVersion, test_utils::test_framework::test_x509::create_test_certificate, prelude_test::SignatureKeypair,
+    prelude_test::SignatureKeypair,
+    test_utils::test_framework::test_x509::create_test_certificate,
+    versions::ProtocolVersion,
 };
 
 use rstest::*;
@@ -15,7 +17,10 @@ use rstest_reuse::{self, *};
 use crate::group::GroupContext;
 use openmls_rust_crypto::OpenMlsRustCrypto;
 use openmls_traits::{
-    crypto::OpenMlsCrypto, random::OpenMlsRand, types::{Ciphersuite, SignatureScheme}, OpenMlsCryptoProvider,
+    crypto::OpenMlsCrypto,
+    random::OpenMlsRand,
+    types::{Ciphersuite, SignatureScheme},
+    OpenMlsCryptoProvider,
 };
 use tls_codec::{Deserialize, Serialize};
 
@@ -109,7 +114,6 @@ fn test_welcome_message_with_version(
     let msg_encoded = msg
         .tls_serialize_detached()
         .expect("An unexpected error occurred.");
-    println!("encoded msg: {:?}", msg_encoded);
     let msg_decoded = Welcome::tls_deserialize(&mut msg_encoded.as_slice())
         .expect("An unexpected error occurred.");
 

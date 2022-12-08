@@ -69,7 +69,6 @@ impl CoreGroup {
 
         // Create key schedule
         let mut key_schedule = KeySchedule::init(ciphersuite, backend, joiner_secret, psk_secret)?;
-        println!("moin3 ");
         // Derive welcome key & nonce from the key schedule
         let (welcome_key, welcome_nonce) = key_schedule
             .welcome(backend)
@@ -82,7 +81,6 @@ impl CoreGroup {
             .map_err(|_| WelcomeError::GroupInfoDecryptionFailure)?;
         let group_info = GroupInfo::tls_deserialize(&mut group_info_bytes.as_slice())
             .map_err(|_| WelcomeError::MalformedWelcomeMessage)?;
-        println!("moin4 ");
         // Make sure that we can support the required capabilities in the group info.
         let group_context_extensions = group_info.group_context().extensions();
         let required_capabilities = group_context_extensions
@@ -102,7 +100,6 @@ impl CoreGroup {
                 .check_extension_support(required_capabilities.extensions())
                 .map_err(|_| WelcomeError::UnsupportedExtensions)?
         }
-        println!("moin5 ");
         let path_secret_option = group_secrets.path_secret;
 
         // Build the ratchet tree
@@ -126,7 +123,6 @@ impl CoreGroup {
                     None => return Err(WelcomeError::MissingRatchetTree),
                 },
             };
-        println!("moin6 ");
 
         // Commit secret is ignored when joining a group, since we already have
         // the joiner_secret.
@@ -142,7 +138,6 @@ impl CoreGroup {
             TreeSyncFromNodesError::LibraryError(e) => e.into(),
             TreeSyncFromNodesError::PublicTreeError(e) => WelcomeError::PublicTreeError(e),
         })?;
-        println!("moin7 ");
         let signer_key_package = tree
             .leaf_from_id(group_info.signer())
             .ok_or(WelcomeError::UnknownSender)?
@@ -152,7 +147,6 @@ impl CoreGroup {
         group_info
             .verify_no_out(backend, signer_key_package.credential())
             .map_err(|_| WelcomeError::InvalidGroupInfoSignature)?;
-        println!("moin8 ");
 
         // Compute state
         let group_context = GroupContext::new(
@@ -165,7 +159,6 @@ impl CoreGroup {
                 .to_vec(),
             group_context_extensions,
         );
-        println!("moin9 ");
 
         let serialized_group_context = group_context
             .tls_serialize_detached()
@@ -184,7 +177,6 @@ impl CoreGroup {
                 .map_err(|_| LibraryError::custom("The tree was too big"))?,
             tree.own_leaf_index(),
         );
-        println!("moin10 ");
 
         let confirmation_tag = message_secrets
             .confirmation_key()
@@ -196,7 +188,6 @@ impl CoreGroup {
             &MlsPlaintextCommitAuthData::from(&confirmation_tag),
             group_context.confirmed_transcript_hash(),
         )?;
-        println!("moin11 ");
 
         // Verify confirmation tag
         if &confirmation_tag != group_info.confirmation_tag() {

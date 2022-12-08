@@ -127,7 +127,6 @@ impl PartialEq for Credential {
 impl Credential {
     /// returns the Identity
     pub fn identity(&self) -> &[u8] {
-        println!("id: {:?}", self.hash.as_slice());
         self.hash.as_slice()
     }
     /// returns the [`SignaturePublicKey`]
