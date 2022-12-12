@@ -63,4 +63,4 @@ harness = false
 
 # Patching unreleased crates
 [patch.crates-io]
-tls_codec = { git = "https://github.com/RustCrypto/formats.git", features = ["derive", "serde"] }
+tls_codec = { git = "https://github.com/RustCrypto/formats.git", branch = "tls_codec_02pre3", features = ["derive", "serde_serialize"]}
