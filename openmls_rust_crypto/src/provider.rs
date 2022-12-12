@@ -394,7 +394,7 @@ impl OpenMlsRand for RustCrypto {
     }
 }
 
-#[derive(thiserror::Error, Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum RandError {
     #[error("Rng lock is poisoned.")]
     LockPoisoned,
