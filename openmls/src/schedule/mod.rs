@@ -157,7 +157,7 @@ mod unit_tests;
 
 /// A group secret that can be used among members to prove that a member was part of a group in a given epoch.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-#[cfg_attr(test, derive(PartialEq))]
+#[cfg_attr(test, derive(Eq, PartialEq))]
 pub struct ResumptionPsk {
     secret: Secret,
 }
@@ -181,7 +181,7 @@ impl ResumptionPsk {
 /// A secret that can be used among members to make sure everyone has the same
 /// group state.
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(test, derive(PartialEq))]
+#[cfg_attr(test, derive(Eq, PartialEq))]
 pub struct AuthenticationCode {
     secret: Secret,
 }
