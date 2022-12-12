@@ -10,7 +10,7 @@ use chacha20poly1305::ChaCha20Poly1305;
 use hkdf::Hkdf;
 use hpke::Hpke;
 use hpke_rs_crypto::types as hpke_types;
-use hpke_rs_crypto::HpkeCrypto;
+use hpke_rs_rust_crypto::HpkeRustCrypto;
 use openmls_traits::{
     crypto::OpenMlsCrypto,
     random::OpenMlsRand,
@@ -366,8 +366,8 @@ impl OpenMlsCrypto for RustCrypto {
     }
 }
 
-fn hpke_from_config(config: HpkeConfig) -> Hpke<HpkeCrypto> {
-    Hpke::<HpkeCrypto>::new(
+fn hpke_from_config(config: HpkeConfig) -> Hpke<HpkeRustCrypto> {
+    Hpke::<HpkeRustCrypto>::new(
         hpke::Mode::Base,
         kem_mode(config.0),
         kdf_mode(config.1),
