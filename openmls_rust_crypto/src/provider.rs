@@ -27,6 +27,7 @@ use openssl::{
 };
 use rand::{RngCore, SeedableRng};
 use sha2::{Digest, Sha256, Sha384, Sha512};
+use thiserror::Error;
 
 #[derive(Debug)]
 pub struct RustCrypto {
@@ -394,7 +395,7 @@ impl OpenMlsRand for RustCrypto {
     }
 }
 
-#[derive(Error, Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(thiserror::Error, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum RandError {
     #[error("Rng lock is poisoned.")]
     LockPoisoned,
