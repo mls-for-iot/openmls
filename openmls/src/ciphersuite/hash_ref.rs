@@ -47,7 +47,7 @@ type Value = [u8; VALUE_LEN];
     Ord,
 )]
 pub struct HashReference {
-    value: Value,
+    pub value: Value,
 }
 
 /// A reference to a key package.
