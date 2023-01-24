@@ -1,3 +1,4 @@
+use chrono::{Duration, NaiveTime, Utc};
 use openmls_traits::{types::Ciphersuite, OpenMlsCryptoProvider};
 use tls_codec::{
     Deserialize, Serialize, Size, TlsByteSliceU16, TlsByteVecU16, TlsByteVecU32, TlsByteVecU8,
@@ -98,6 +99,9 @@ impl MlsCiphertext {
         let mls_ciphertext_content_aad_bytes = mls_ciphertext_content_aad
             .tls_serialize_detached()
             .map_err(LibraryError::missing_bound_check)?;
+        let start_time = Utc::now().time();
+
+
         // Extract generation and key material for encryption
         let secret_type = SecretType::from(&mls_plaintext.content().content_type());
         let (generation, (ratchet_key, ratchet_nonce)) = message_secrets
@@ -122,6 +126,27 @@ impl MlsCiphertext {
                 &prepared_nonce,
             )
             .map_err(LibraryError::unexpected_crypto_error)?;
+
+        let end_time = Utc::now().time();
+        let diff2 = end_time - start_time;
+        if let Some(micro) = diff2.num_microseconds() {
+            println!(
+                "starting-time: {} \n 
+                            end_time: {} \n
+                            Total time taken to generate group message in microseconds {}",
+                start_time, end_time, micro
+            );
+        } else {
+            println!(
+                "starting-time: {} \n 
+                            end_time: {} \n
+                            Total time taken to generate group message in ms {}",
+                start_time,
+                end_time,
+                diff2.num_milliseconds()
+            );
+        }
+
         // Derive the sender data key from the key schedule using the ciphertext.
         let sender_data_key = message_secrets
             .sender_data_secret()
@@ -145,6 +170,7 @@ impl MlsCiphertext {
             .map_err(LibraryError::missing_bound_check)?;
         let sender_data = MlsSenderData::from_sender(hash_ref, generation, reuse_guard);
         // Encrypt the sender data
+
         let encrypted_sender_data = sender_data_key
             .aead_seal(
                 backend,

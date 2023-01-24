@@ -1,3 +1,4 @@
+use chrono::{Duration, NaiveTime, Utc};
 use core_group::{proposals::QueuedProposal, staged_commit::StagedCommit};
 
 use crate::group::{errors::ValidationError, mls_group::errors::UnverifiedMessageError};
@@ -33,6 +34,7 @@ impl CoreGroup {
 
         // Checks the following semantic validation:
         //  - ValSem006
+        let start_time = Utc::now().time();
         let decrypted_message = match message.wire_format() {
             WireFormat::MlsPlaintext => DecryptedMessage::from_inbound_plaintext(message)?,
             WireFormat::MlsCiphertext => {
@@ -45,7 +47,25 @@ impl CoreGroup {
                 )?
             }
         };
-
+        let end_time = Utc::now().time();
+        let diff2 = end_time - start_time;
+        if let Some(micro) = diff2.num_microseconds() {
+            println!(
+                "starting-time: {} \n 
+                            end_time: {} \n
+                            Total time taken to decrypt group message in microseconds {}",
+                start_time, end_time, micro
+            );
+        } else {
+            println!(
+                "starting-time: {} \n 
+                            end_time: {} \n
+                            Total time taken to decrypt group message in ms {}",
+                start_time,
+                end_time,
+                diff2.num_milliseconds()
+            );
+        }
         // Checks the following semantic validation:
         //  - ValSem004
         //  - ValSem005
