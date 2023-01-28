@@ -63,7 +63,7 @@ impl CoreGroup {
         bench.disable().unwrap();
         let counts = bench.read().unwrap();
         println!(
-            "cycles / instructionsto generate group message : {} / {} ({:.2} cpi)",
+            "cycles / instructions to decrypt group message : {} / {} ({:.2} cpi)",
             counts[&cycles],
             counts[&insns],
             (counts[&cycles] as f64 / counts[&insns] as f64)
