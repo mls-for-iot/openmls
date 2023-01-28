@@ -20,7 +20,6 @@ tls_codec = { version = "0.2.0", features = ["derive", "serde"] }
 # Only required for tests.
 rand = { version = "0.8", optional = true }
 rand_core = { version = "0.5", features = ["std"]}
-perf-event = "0.4.8"
 
 # The js feature is required for wasm.
 # We enable the feature here because other dependencies need getrandom.

@@ -1,8 +1,6 @@
-use chrono::{Duration, NaiveTime, Utc};
 use core_group::{proposals::QueuedProposal, staged_commit::StagedCommit};
 
 use crate::group::{errors::ValidationError, mls_group::errors::UnverifiedMessageError};
-use perf_event::{Builder, Group as bench};
 
 use super::{proposals::ProposalStore, *};
 
@@ -35,19 +33,6 @@ impl CoreGroup {
 
         // Checks the following semantic validation:
         //  - ValSem006
-        let start_time = Utc::now().time();
-        let mut bench = bench::new().unwrap();
-        let cycles = Builder::new()
-            .group(&mut bench)
-            .kind(Hardware::CPU_CYCLES)
-            .build()
-            .unwrap();
-        let insns = Builder::new()
-            .group(&mut bench)
-            .kind(Hardware::INSTRUCTIONS)
-            .build()
-            .unwrap();
-        bench.enable().unwrap();
         let decrypted_message = match message.wire_format() {
             WireFormat::MlsPlaintext => DecryptedMessage::from_inbound_plaintext(message)?,
             WireFormat::MlsCiphertext => {
@@ -60,33 +45,7 @@ impl CoreGroup {
                 )?
             }
         };
-        bench.disable().unwrap();
-        let counts = bench.read().unwrap();
-        println!(
-            "cycles / instructionsto generate group message : {} / {} ({:.2} cpi)",
-            counts[&cycles],
-            counts[&insns],
-            (counts[&cycles] as f64 / counts[&insns] as f64)
-        );
-        let end_time = Utc::now().time();
-        let diff2 = end_time - start_time;
-        if let Some(micro) = diff2.num_microseconds() {
-            println!(
-                "starting-time: {} \n 
-                            end_time: {} \n
-                            Total time taken to decrypt group message in microseconds {}",
-                start_time, end_time, micro
-            );
-        } else {
-            println!(
-                "starting-time: {} \n 
-                            end_time: {} \n
-                            Total time taken to decrypt group message in ms {}",
-                start_time,
-                end_time,
-                diff2.num_milliseconds()
-            );
-        }
+    
         // Checks the following semantic validation:
         //  - ValSem004
         //  - ValSem005
