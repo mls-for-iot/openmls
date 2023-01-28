@@ -1,5 +1,6 @@
 use chrono::{Duration, NaiveTime, Utc};
 use openmls_traits::{types::Ciphersuite, OpenMlsCryptoProvider};
+use perf_event::{Builder, Group as bench};
 use tls_codec::{
     Deserialize, Serialize, Size, TlsByteSliceU16, TlsByteVecU16, TlsByteVecU32, TlsByteVecU8,
     TlsDeserialize, TlsSerialize, TlsSize,
@@ -100,7 +101,16 @@ impl MlsCiphertext {
             .tls_serialize_detached()
             .map_err(LibraryError::missing_bound_check)?;
         let start_time = Utc::now().time();
-
+        let mut bench = bench::new().unwrap();
+        let cycles = Builder::new()
+            .group(&mut bench)
+            .kind(Hardware::CPU_CYCLES)
+            .build().unwrap();
+        let insns = Builder::new()
+            .group(&mut bench)
+            .kind(Hardware::INSTRUCTIONS)
+            .build().unwrap();
+        bench.enable().unwrap();
 
         // Extract generation and key material for encryption
         let secret_type = SecretType::from(&mls_plaintext.content().content_type());
@@ -126,7 +136,14 @@ impl MlsCiphertext {
                 &prepared_nonce,
             )
             .map_err(LibraryError::unexpected_crypto_error)?;
-
+        bench.disable().unwrap();
+        let counts = bench.read().unwrap();
+        println!(
+            "cycles / instructionsto generate group message : {} / {} ({:.2} cpi)",
+            counts[&cycles],
+            counts[&insns],
+            (counts[&cycles] as f64 / counts[&insns] as f64)
+        );
         let end_time = Utc::now().time();
         let diff2 = end_time - start_time;
         if let Some(micro) = diff2.num_microseconds() {
