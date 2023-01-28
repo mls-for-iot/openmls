@@ -1,6 +1,7 @@
 use chrono::{Duration, NaiveTime, Utc};
 use openmls_traits::{types::Ciphersuite, OpenMlsCryptoProvider};
-use perf_event::{Builder, Group as bench};
+use perf_event::events::Hardware::{self, *};
+use perf_event::{Builder, Counter, Group as bench};
 use tls_codec::{
     Deserialize, Serialize, Size, TlsByteSliceU16, TlsByteVecU16, TlsByteVecU32, TlsByteVecU8,
     TlsDeserialize, TlsSerialize, TlsSize,
@@ -105,11 +106,13 @@ impl MlsCiphertext {
         let cycles = Builder::new()
             .group(&mut bench)
             .kind(Hardware::CPU_CYCLES)
-            .build().unwrap();
+            .build()
+            .unwrap();
         let insns = Builder::new()
             .group(&mut bench)
             .kind(Hardware::INSTRUCTIONS)
-            .build().unwrap();
+            .build()
+            .unwrap();
         bench.enable().unwrap();
 
         // Extract generation and key material for encryption

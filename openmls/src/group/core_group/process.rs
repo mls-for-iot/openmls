@@ -2,7 +2,8 @@ use chrono::{Duration, NaiveTime, Utc};
 use core_group::{proposals::QueuedProposal, staged_commit::StagedCommit};
 
 use crate::group::{errors::ValidationError, mls_group::errors::UnverifiedMessageError};
-use perf_event::{Builder, Group as bench};
+use perf_event::events::Hardware::{self, *};
+use perf_event::{Builder, Counter, Group as bench};
 
 use super::{proposals::ProposalStore, *};
 
